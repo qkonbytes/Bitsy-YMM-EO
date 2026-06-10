@@ -18,5 +18,5 @@ scopes = "read_products,write_products,read_themes,write_themes"
 
 [auth]
 redirect_urls = [ 
-  "https://bitsy-ymm-eo.vercel.app/api/auth-callback"
+  "https://bitsy-ymm-eo.vercel.app/api/install"
 ]
