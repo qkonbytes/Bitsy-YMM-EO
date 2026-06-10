@@ -13,19 +13,31 @@ function verifyHmac(query) {
     .map(key => `${key}=${params[key]}`)
     .join('&');
 
-  const generatedHmac = crypto
-    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
-    .update(message)
-    .digest('hex');
+  // Try both old and new secrets
+  const secrets = [
+    process.env.SHOPIFY_API_SECRET,
+    process.env.SHOPIFY_API_SECRET_OLD
+  ].filter(Boolean);
 
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(generatedHmac, 'hex'),
-      Buffer.from(hmac, 'hex')
-    );
-  } catch {
-    return false;
+  for (const secret of secrets) {
+    const generatedHmac = crypto
+      .createHmac('sha256', secret)
+      .update(message)
+      .digest('hex');
+
+    try {
+      if (crypto.timingSafeEqual(
+        Buffer.from(generatedHmac, 'hex'),
+        Buffer.from(hmac, 'hex')
+      )) {
+        console.log('HMAC matched with secret preview:', secret.substring(0, 6));
+        return true;
+      }
+    } catch {
+      continue;
+    }
   }
+  return false;
 }
 
 module.exports = async function handler(req, res) {
