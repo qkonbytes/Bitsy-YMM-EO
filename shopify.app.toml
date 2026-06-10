@@ -2,7 +2,7 @@
 
 client_id = "b0b65072439310f0c015fa3d90d75b92"
 name = "Bitsy-YMM-EO"
-application_url = "https://bitsy-ymm-eo.vercel.app/api/auth"
+application_url = "https://bitsy-ymm-eo.vercel.app"
 embedded = true
 
 [build]
