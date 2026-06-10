@@ -156,26 +156,36 @@ export default function HomePage() {
     }
   }
 
-  async function forceSync() {
-    setSyncing(true);
-    setSyncMessage('');
-    try {
-      const res = await fetch(`${VERCEL_URL}/api/trigger-sync`, {
+async function forceSync() {
+  setSyncing(true);
+  setSyncMessage('');
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/trigger_sync`,
+      {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSyncMessage(`✅ Sync complete — ${data.synced || data.updated} products synced`);
-        await loadDashboard();
-      } else {
-        setSyncMessage(`❌ Sync failed: ${data.error}`);
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: '{}'
       }
-    } catch (err) {
-      setSyncMessage(`❌ Sync failed: ${err.message}`);
+    );
+    const data = await res.json();
+    if (data.success) {
+      setSyncMessage('✅ Sync triggered — products will update shortly');
+      setTimeout(async () => {
+        await loadDashboard();
+      }, 5000);
+    } else {
+      setSyncMessage(`❌ Sync failed: ${JSON.stringify(data)}`);
     }
-    setSyncing(false);
+  } catch (err) {
+    setSyncMessage(`❌ Sync failed: ${err.message}`);
   }
+  setSyncing(false);
+}
 
   const statCards = [
     { label: 'Total Fitment Records', value: stats.totalFitments },
