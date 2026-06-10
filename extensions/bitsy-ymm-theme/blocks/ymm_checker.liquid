@@ -1,0 +1,282 @@
+{% schema %}
+{
+  "name": "YMM Fitment Checker",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Verify fitment with your vehicle"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "fit_color",
+      "label": "Fits Color",
+      "default": "#008000"
+    },
+    {
+      "type": "color",
+      "id": "nofit_color",
+      "label": "Does Not Fit Color",
+      "default": "#ff0000"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="bitsy-checker" id="bitsy-checker">
+  <h3 class="bitsy-checker-heading">{{ block.settings.heading }}</h3>
+
+  <div class="bitsy-checker-dropdowns">
+    <div class="bitsy-checker-field">
+      <label for="checker-make">Make</label>
+      <select id="checker-make" name="make">
+        <option value="">Select Make</option>
+      </select>
+    </div>
+
+    <div class="bitsy-checker-field">
+      <label for="checker-model">Model</label>
+      <select id="checker-model" name="model" disabled>
+        <option value="">Select Model</option>
+      </select>
+    </div>
+
+    <div class="bitsy-checker-field">
+      <label for="checker-year">Year</label>
+      <select id="checker-year" name="year" disabled>
+        <option value="">Select Year</option>
+      </select>
+    </div>
+  </div>
+
+  <button
+    id="checker-btn"
+    class="bitsy-checker-btn"
+    style="background-color: {{ block.settings.button_color }};"
+    disabled
+  >
+    Verify
+  </button>
+
+  <div id="checker-result" class="bitsy-checker-result" style="display:none;">
+  </div>
+</div>
+
+<style>
+  .bitsy-checker {
+    padding: 1.5rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    margin: 1.5rem 0;
+  }
+  .bitsy-checker-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  .bitsy-checker-dropdowns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .bitsy-checker-field {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 120px;
+  }
+  .bitsy-checker-field label {
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .bitsy-checker-field select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    background: white;
+  }
+  .bitsy-checker-field select:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+  }
+  .bitsy-checker-btn {
+    width: 100%;
+    padding: 0.75rem;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .bitsy-checker-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .bitsy-checker-result {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .bitsy-checker-result.fits {
+    background: #f0fff0;
+    color: {{ block.settings.fit_color }};
+    border: 1px solid {{ block.settings.fit_color }};
+  }
+  .bitsy-checker-result.no-fit {
+    background: #fff0f0;
+    color: {{ block.settings.nofit_color }};
+    border: 1px solid {{ block.settings.nofit_color }};
+  }
+</style>
+
+<script>
+  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "" }}';
+  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "" }}';
+  const PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
+
+  const checkerMake = document.getElementById('checker-make');
+  const checkerModel = document.getElementById('checker-model');
+  const checkerYear = document.getElementById('checker-year');
+  const checkerBtn = document.getElementById('checker-btn');
+  const checkerResult = document.getElementById('checker-result');
+
+  // Load makes
+  async function loadCheckerMakes() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/vehicle?select=make&order=make.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    const makes = [...new Set(data.map(r => r.make))];
+    makes.forEach(make => {
+      const opt = document.createElement('option');
+      opt.value = make;
+      opt.textContent = make;
+      checkerMake.appendChild(opt);
+    });
+  }
+
+  // Load models
+  checkerMake.addEventListener('change', async () => {
+    const make = checkerMake.value;
+    checkerModel.innerHTML = '<option value="">Select Model</option>';
+    checkerYear.innerHTML = '<option value="">Select Year</option>';
+    checkerModel.disabled = true;
+    checkerYear.disabled = true;
+    checkerBtn.disabled = true;
+    checkerResult.style.display = 'none';
+
+    if (!make) return;
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/vehicle?select=model&make=eq.${encodeURIComponent(make)}&order=model.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    const models = [...new Set(data.map(r => r.model))];
+    models.forEach(model => {
+      const opt = document.createElement('option');
+      opt.value = model;
+      opt.textContent = model;
+      checkerModel.appendChild(opt);
+    });
+    checkerModel.disabled = false;
+  });
+
+  // Load years
+  checkerModel.addEventListener('change', async () => {
+    const make = checkerMake.value;
+    const model = checkerModel.value;
+    checkerYear.innerHTML = '<option value="">Select Year</option>';
+    checkerYear.disabled = true;
+    checkerBtn.disabled = true;
+    checkerResult.style.display = 'none';
+
+    if (!model) return;
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/vehicle?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&order=year.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+    const years = [...new Set(data.map(r => r.year))];
+    years.forEach(year => {
+      const opt = document.createElement('option');
+      opt.value = year;
+      opt.textContent = year;
+      checkerYear.appendChild(opt);
+    });
+    checkerYear.disabled = false;
+  });
+
+  // Enable verify button
+  checkerYear.addEventListener('change', () => {
+    checkerBtn.disabled = !checkerYear.value;
+    checkerResult.style.display = 'none';
+  });
+
+  // Verify fitment
+  checkerBtn.addEventListener('click', async () => {
+    const make = checkerMake.value;
+    const model = checkerModel.value;
+    const year = checkerYear.value;
+
+    checkerBtn.textContent = 'Checking...';
+    checkerBtn.disabled = true;
+
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(PRODUCT_SKU)}&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&select=id&limit=1`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      }
+    );
+    const data = await res.json();
+
+    checkerResult.style.display = 'block';
+    if (data.length > 0) {
+      checkerResult.className = 'bitsy-checker-result fits';
+      checkerResult.textContent = `✅ Fits your ${year} ${make} ${model}`;
+    } else {
+      checkerResult.className = 'bitsy-checker-result no-fit';
+      checkerResult.textContent = `❌ Does not fit your ${year} ${make} ${model}`;
+    }
+
+    checkerBtn.textContent = 'Verify';
+    checkerBtn.disabled = false;
+  });
+
+  // Init
+  loadCheckerMakes();
+</script>
