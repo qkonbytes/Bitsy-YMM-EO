@@ -3,10 +3,14 @@ const crypto = require('crypto');
 
 function verifyHmac(query) {
   try {
-    const { hmac, ...rest } = query;
-    const message = Object.keys(rest)
+    const params = Object.assign({}, query);
+    const hmac = params.hmac;
+    delete params.hmac;
+    delete params.state;
+
+    const message = Object.keys(params)
       .sort()
-      .map(key => `${key}=${Array.isArray(rest[key]) ? rest[key].join(',') : rest[key]}`)
+      .map(key => `${key}=${params[key]}`)
       .join('&');
 
     const generatedHmac = crypto
@@ -19,7 +23,7 @@ function verifyHmac(query) {
       Buffer.from(hmac, 'hex')
     );
   } catch (err) {
-    console.error('HMAC verification error:', err);
+    console.error('HMAC error:', err);
     return false;
   }
 }
@@ -30,65 +34,35 @@ module.exports = async function handler(req, res) {
   const { shop, code, hmac } = req.query;
 
   if (!shop || !code || !hmac) {
-    console.error('Missing params:', { shop: !!shop, code: !!code, hmac: !!hmac });
-    return res.status(400).json({ 
-      error: 'Missing required parameters',
-      received: { shop: !!shop, code: !!code, hmac: !!hmac }
-    });
-  }
-
-  // Verify HMAC
-  function verifyHmac(query) {
-  try {
-    const { hmac, ...rest } = query;
-    
-    // Remove state from verification as Shopify handles it separately
-    delete rest.state;
-    
-    const message = Object.keys(rest)
-      .sort()
-      .map(key => `${key}=${Array.isArray(rest[key]) ? rest[key].join(',') : rest[key]}`)
-      .join('&');
-
-    const generatedHmac = crypto
-      .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
-      .update(message)
-      .digest('hex');
-
-    return crypto.timingSafeEqual(
-      Buffer.from(generatedHmac, 'hex'),
-      Buffer.from(hmac, 'hex')
-    );
-  } catch (err) {
-    console.error('HMAC verification error:', err);
-    return false;
-  }
-}
-
-module.exports = async function handler(req, res) {
-  console.log('Auth callback received:', JSON.stringify(req.query));
-  
-  const { shop, code, hmac } = req.query;
-  
-  if (!shop || !code || !hmac) {
-    console.error('Missing params:', { shop: !!shop, code: !!code, hmac: !!hmac });
-    return res.status(400).json({ 
+    return res.status(400).json({
       error: 'Missing required parameters',
       received: { shop: !!shop, code: !!code, hmac: !!hmac }
     });
   }
 
   if (!verifyHmac(req.query)) {
-    console.error('HMAC failed for query:', JSON.stringify(req.query));
     return res.status(401).json({ error: 'HMAC verification failed' });
   }
-  // ... rest of the function
+
+  try {
+    const tokenRes = await fetch(
+      `https://${shop}/admin/oauth/access_token`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: process.env.SHOPIFY_API_KEY,
+          client_secret: process.env.SHOPIFY_API_SECRET,
+          code
+        })
+      }
+    );
 
     const tokenData = await tokenRes.json();
-    console.log('Token exchange response:', JSON.stringify(tokenData));
+    console.log('Token response:', JSON.stringify(tokenData));
 
     if (!tokenData.access_token) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Failed to get access token',
         details: tokenData
       });
@@ -96,7 +70,6 @@ module.exports = async function handler(req, res) {
 
     const access_token = tokenData.access_token;
 
-    // Store session in Supabase
     const { error: dbError } = await supabase
       .from('app_sessions')
       .upsert(
@@ -106,19 +79,17 @@ module.exports = async function handler(req, res) {
 
     if (dbError) {
       console.error('Supabase error:', dbError);
-      throw dbError;
+      return res.status(500).json({ error: dbError.message });
     }
 
-    console.log(`✅ Session stored for ${shop}`);
+    console.log('Session stored for:', shop);
 
-    // Trigger full sync in background
     fetch(`${process.env.APP_URL}/api/sync-products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ shop, access_token })
-    }).catch(err => console.error('Sync trigger error:', err));
+    }).catch(err => console.error('Sync error:', err));
 
-    // Redirect to app
     return res.redirect(
       `https://${shop}/admin/apps/${process.env.SHOPIFY_API_KEY}`
     );
