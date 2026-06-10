@@ -162,8 +162,8 @@
 </style>
 
 <script>
-  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "" }}';
-  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "" }}';
+  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "https://mpvhnycxwntslepogfuc.supabase.co" }}';
+  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT" }}';
 
   const params = new URLSearchParams(window.location.search);
   const make = params.get('make');

@@ -1,5 +1,5 @@
-const SUPABASE_URL = 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
 const makeSelect = document.getElementById('bitsy-make');
 const modelSelect = document.getElementById('bitsy-model');

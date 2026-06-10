@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "shopify": "shopify",
-    "build": "echo 'No build required'",
+    "build": "echo built",
     "dev": "shopify app dev",
     "info": "shopify app info",
     "generate": "shopify app generate",
