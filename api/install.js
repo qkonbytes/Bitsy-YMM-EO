@@ -5,40 +5,25 @@ function verifyHmac(query) {
   const params = Object.assign({}, query);
   const hmac = params.hmac;
   delete params.hmac;
-  delete params.state;
-  // Don't delete host this time
 
   const message = Object.keys(params)
     .sort()
     .map(key => `${key}=${params[key]}`)
     .join('&');
 
-  console.log('HMAC message with host:', message);
+  console.log('HMAC message:', message);
 
-  const secrets = [
-    process.env.SHOPIFY_API_SECRET,
-    process.env.SHOPIFY_API_SECRET_OLD
-  ].filter(Boolean);
+  const generatedHmac = crypto
+    .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+    .update(message)
+    .digest('hex');
 
-  for (const secret of secrets) {
-    const generatedHmac = crypto
-      .createHmac('sha256', secret)
-      .update(message)
-      .digest('hex');
+  console.log('Generated:', generatedHmac);
+  console.log('Expected:', hmac);
+  console.log('Match:', generatedHmac === hmac);
 
-    try {
-      if (crypto.timingSafeEqual(
-        Buffer.from(generatedHmac, 'hex'),
-        Buffer.from(hmac, 'hex')
-      )) {
-        console.log('HMAC matched!');
-        return true;
-      }
-    } catch {
-      continue;
-    }
-  }
-  return false;
+  // Use simple string comparison instead of timingSafeEqual
+  return generatedHmac === hmac;
 }
 
 module.exports = async function handler(req, res) {
