@@ -69,11 +69,11 @@ modelSelect.addEventListener('change', async () => {
   if (!model) return;
 
   const res = await fetch(
-    `${https://mpvhnycxwntslepogfuc.supabase.co}/rest/v1/vehicle?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&order=year.desc`,
+    `${SUPABASE_URL}/rest/v1/vehicle?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&order=year.desc`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT}`
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
       }
     }
   );
