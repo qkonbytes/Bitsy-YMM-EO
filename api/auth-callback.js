@@ -38,25 +38,51 @@ module.exports = async function handler(req, res) {
   }
 
   // Verify HMAC
-  if (!verifyHmac(req.query)) {
-    console.error('HMAC verification failed');
-    return res.status(401).json({ error: 'HMAC verification failed' });
+  function verifyHmac(query) {
+  try {
+    const { hmac, ...rest } = query;
+    
+    // Remove state from verification as Shopify handles it separately
+    delete rest.state;
+    
+    const message = Object.keys(rest)
+      .sort()
+      .map(key => `${key}=${Array.isArray(rest[key]) ? rest[key].join(',') : rest[key]}`)
+      .join('&');
+
+    const generatedHmac = crypto
+      .createHmac('sha256', process.env.SHOPIFY_API_SECRET)
+      .update(message)
+      .digest('hex');
+
+    return crypto.timingSafeEqual(
+      Buffer.from(generatedHmac, 'hex'),
+      Buffer.from(hmac, 'hex')
+    );
+  } catch (err) {
+    console.error('HMAC verification error:', err);
+    return false;
+  }
+}
+
+module.exports = async function handler(req, res) {
+  console.log('Auth callback received:', JSON.stringify(req.query));
+  
+  const { shop, code, hmac } = req.query;
+  
+  if (!shop || !code || !hmac) {
+    console.error('Missing params:', { shop: !!shop, code: !!code, hmac: !!hmac });
+    return res.status(400).json({ 
+      error: 'Missing required parameters',
+      received: { shop: !!shop, code: !!code, hmac: !!hmac }
+    });
   }
 
-  try {
-    // Exchange code for access token
-    const tokenRes = await fetch(
-      `https://${shop}/admin/oauth/access_token`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          client_id: process.env.SHOPIFY_API_KEY,
-          client_secret: process.env.SHOPIFY_API_SECRET,
-          code
-        })
-      }
-    );
+  if (!verifyHmac(req.query)) {
+    console.error('HMAC failed for query:', JSON.stringify(req.query));
+    return res.status(401).json({ error: 'HMAC verification failed' });
+  }
+  // ... rest of the function
 
     const tokenData = await tokenRes.json();
     console.log('Token exchange response:', JSON.stringify(tokenData));
