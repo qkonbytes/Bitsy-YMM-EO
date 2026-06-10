@@ -2,7 +2,7 @@ import {useState, useEffect} from 'preact/hooks';
 
 const VERCEL_URL = 'https://bitsy-ymm-eo.vercel.app';
 const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
-const SUPABASE_ANON_KEY = 'your-publishable-key-here';
+const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
 export default function HomePage() {
   const [stats, setStats] = useState({
@@ -34,15 +34,30 @@ export default function HomePage() {
     setLoading(false);
   }
 
-  async function checkApiStatus() {
-    try {
-      const res = await fetch(`${VERCEL_URL}/api/health`);
-      const data = await res.json();
-      setApiStatus(data.status ? 'online' : 'offline');
-    } catch {
+async function checkApiStatus() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    
+    const res = await fetch(`${VERCEL_URL}/api/health`, {
+      signal: controller.signal,
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    
+    clearTimeout(timeout);
+    
+    if (res.ok) {
+      setApiStatus('online');
+    } else {
       setApiStatus('offline');
     }
+  } catch {
+    setApiStatus('offline');
   }
+}
 
   async function loadStats() {
     try {
