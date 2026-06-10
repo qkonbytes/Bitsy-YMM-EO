@@ -53,6 +53,9 @@ module.exports = async function handler(req, res) {
   const message = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&');
   console.log('HMAC message:', message);
   console.log('Secret length:', process.env.SHOPIFY_API_SECRET?.length);
+  console.log('Secret preview:', process.env.SHOPIFY_API_SECRET?.substring(0, 6));
+  console.log('Generated HMAC:', crypto.createHmac('sha256', process.env.SHOPIFY_API_SECRET).update(message).digest('hex'));
+  console.log('Expected HMAC:', req.query.hmac);
 
   if (!verifyHmac(req.query)) {
     console.error('HMAC failed');
