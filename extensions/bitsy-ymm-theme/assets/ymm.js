@@ -9,7 +9,7 @@ const searchBtn = document.getElementById('bitsy-search-btn');
 // Load makes on page load
 async function loadMakes() {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/vehicle?select=make&order=make.asc`,
+    `${SUPABASE_URL}/rest/v1/distinct_makes?select=make`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -18,11 +18,10 @@ async function loadMakes() {
     }
   );
   const data = await res.json();
-  const makes = [...new Set(data.map(r => r.make))];
-  makes.forEach(make => {
+  data.forEach(row => {
     const opt = document.createElement('option');
-    opt.value = make;
-    opt.textContent = make;
+    opt.value = row.make;
+    opt.textContent = row.make;
     makeSelect.appendChild(opt);
   });
 }
@@ -39,7 +38,7 @@ makeSelect.addEventListener('change', async () => {
   if (!make) return;
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/vehicle?select=model&make=eq.${encodeURIComponent(make)}&order=model.asc`,
+    `${SUPABASE_URL}/rest/v1/distinct_models?select=model&make=eq.${encodeURIComponent(make)}`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -48,11 +47,10 @@ makeSelect.addEventListener('change', async () => {
     }
   );
   const data = await res.json();
-  const models = [...new Set(data.map(r => r.model))];
-  models.forEach(model => {
+  data.forEach(row => {
     const opt = document.createElement('option');
-    opt.value = model;
-    opt.textContent = model;
+    opt.value = row.model;
+    opt.textContent = row.model;
     modelSelect.appendChild(opt);
   });
   modelSelect.disabled = false;
@@ -69,7 +67,7 @@ modelSelect.addEventListener('change', async () => {
   if (!model) return;
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/vehicle?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&order=year.desc`,
+    `${SUPABASE_URL}/rest/v1/distinct_years?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}`,
     {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -78,15 +76,15 @@ modelSelect.addEventListener('change', async () => {
     }
   );
   const data = await res.json();
-  const years = [...new Set(data.map(r => r.year))];
-  years.forEach(year => {
+  data.forEach(row => {
     const opt = document.createElement('option');
-    opt.value = year;
-    opt.textContent = year;
+    opt.value = row.year;
+    opt.textContent = row.year;
     yearSelect.appendChild(opt);
   });
   yearSelect.disabled = false;
 });
+
 
 // Enable search button when year is selected
 yearSelect.addEventListener('change', () => {
