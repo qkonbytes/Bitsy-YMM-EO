@@ -1,14 +1,21 @@
 const { fullSync } = require('./sync');
+const { validateSession } = require('./validate-session');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { shop, access_token } = req.body;
+  let shop = req.body?.shop;
+  let access_token = req.body?.access_token;
 
+  // If no credentials in body, look up from session
   if (!shop || !access_token) {
-    return res.status(400).json({ error: 'Missing shop or access_token' });
+    const session = await validateSession(shop);
+    if (!session) {
+      return res.status(401).json({ error: 'No valid session found' });
+    }
+    access_token = session.access_token;
   }
 
   try {

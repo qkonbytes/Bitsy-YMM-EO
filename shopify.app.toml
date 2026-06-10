@@ -2,7 +2,7 @@
 
 client_id = "b0b65072439310f0c015fa3d90d75b92"
 name = "Bitsy-YMM-EO"
-application_url = "https://bitsy-ymm-eo.vercel.app"
+application_url = "https://bitsy-ymm-eo.vercel.app/api/auth"
 embedded = true
 
 [build]
@@ -19,9 +19,9 @@ embedded_app_direct_api_access = true
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_products,read_themes,write_themes"
 
+
 [auth]
 redirect_urls = [ 
-  "https://bitsy-ymm-eo.vercel.app/auth/callback",
   "https://bitsy-ymm-eo.vercel.app/api/auth-callback"
 ]
 
