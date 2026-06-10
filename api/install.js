@@ -6,14 +6,15 @@ function verifyHmac(query) {
   const hmac = params.hmac;
   delete params.hmac;
   delete params.state;
-  delete params.host;
+  // Don't delete host this time
 
   const message = Object.keys(params)
     .sort()
     .map(key => `${key}=${params[key]}`)
     .join('&');
 
-  // Try both old and new secrets
+  console.log('HMAC message with host:', message);
+
   const secrets = [
     process.env.SHOPIFY_API_SECRET,
     process.env.SHOPIFY_API_SECRET_OLD
@@ -30,7 +31,7 @@ function verifyHmac(query) {
         Buffer.from(generatedHmac, 'hex'),
         Buffer.from(hmac, 'hex')
       )) {
-        console.log('HMAC matched with secret preview:', secret.substring(0, 6));
+        console.log('HMAC matched!');
         return true;
       }
     } catch {
