@@ -21,3 +21,6 @@ redirect_urls = [
   "https://bitsy-ymm-eo.vercel.app/api/install",
   "https://bitsy-ymm-eo.vercel.app/api/auth-callback"
 ]
+
+[sidekick]
+extensions_summary = "YMM fitment search and compatibility checker for vehicle parts"
