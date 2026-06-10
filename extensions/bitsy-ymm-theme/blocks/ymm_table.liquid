@@ -1,0 +1,197 @@
+{% schema %}
+{
+  "name": "YMM Compatibility Table",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Compatibility"
+    },
+    {
+      "type": "color",
+      "id": "header_color",
+      "label": "Table Header Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "header_text_color",
+      "label": "Table Header Text Color",
+      "default": "#ffffff"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="bitsy-table-wrap" id="bitsy-table-wrap">
+  <h2 class="bitsy-table-heading">{{ block.settings.heading }}</h2>
+  <p id="bitsy-table-count" class="bitsy-table-count"></p>
+
+  <div id="bitsy-table-loading" class="bitsy-table-loading">
+    Loading compatibility data...
+  </div>
+
+  <table id="bitsy-compat-table" class="bitsy-compat-table" style="display:none;">
+    <thead style="background-color: {{ block.settings.header_color }}; color: {{ block.settings.header_text_color }};">
+      <tr>
+        <th id="th-make" class="sortable" data-col="make">
+          Make <span class="sort-icon">↕</span>
+        </th>
+        <th id="th-model" class="sortable" data-col="model">
+          Model <span class="sort-icon">↕</span>
+        </th>
+        <th id="th-year" class="sortable" data-col="year">
+          Year <span class="sort-icon">↕</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody id="bitsy-table-body">
+    </tbody>
+  </table>
+
+  <p id="bitsy-table-empty" class="bitsy-table-empty" style="display:none;">
+    No compatibility data found for this product.
+  </p>
+</div>
+
+<style>
+  .bitsy-table-wrap {
+    margin: 2rem 0;
+  }
+  .bitsy-table-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .bitsy-table-count {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+  .bitsy-table-loading {
+    font-size: 0.95rem;
+    color: #999;
+    padding: 1rem 0;
+  }
+  .bitsy-compat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+  .bitsy-compat-table thead th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+  }
+  .bitsy-compat-table thead th:hover {
+    opacity: 0.85;
+  }
+  .bitsy-compat-table tbody tr {
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .bitsy-compat-table tbody tr:hover {
+    background: #f9f9f9;
+  }
+  .bitsy-compat-table tbody td {
+    padding: 0.65rem 1rem;
+  }
+  .sort-icon {
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+  }
+  .bitsy-table-empty {
+    color: #999;
+    font-size: 0.95rem;
+    padding: 1rem 0;
+  }
+</style>
+
+<script>
+  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "" }}';
+  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "" }}';
+  const PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
+
+  const tableBody = document.getElementById('bitsy-table-body');
+  const tableEl = document.getElementById('bitsy-compat-table');
+  const loadingEl = document.getElementById('bitsy-table-loading');
+  const emptyEl = document.getElementById('bitsy-table-empty');
+  const countEl = document.getElementById('bitsy-table-count');
+
+  let tableData = [];
+  let sortCol = 'make';
+  let sortDir = 'asc';
+
+  // Fetch all fitment rows for this SKU
+  async function loadCompatibility() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(PRODUCT_SKU)}&is_universal=eq.false&select=make,model,year&order=make.asc,model.asc,year.asc`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+      const data = await res.json();
+      loadingEl.style.display = 'none';
+
+      if (!data || data.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      tableData = data;
+      countEl.textContent = `${data.length} vehicle(s) are compatible with this part.`;
+      tableEl.style.display = 'table';
+      renderTable();
+    } catch (err) {
+      loadingEl.textContent = 'Failed to load compatibility data.';
+    }
+  }
+
+  // Render table rows
+  function renderTable() {
+    const sorted = [...tableData].sort((a, b) => {
+      const valA = String(a[sortCol]).toLowerCase();
+      const valB = String(b[sortCol]).toLowerCase();
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    tableBody.innerHTML = sorted.map(row => `
+      <tr>
+        <td>${row.make}</td>
+        <td>${row.model}</td>
+        <td>${row.year}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Sorting
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = col;
+        sortDir = 'asc';
+      }
+      document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '↕');
+      th.querySelector('.sort-icon').textContent = sortDir === 'asc' ? '↑' : '↓';
+      renderTable();
+    });
+  });
+
+  // Init
+  if (PRODUCT_SKU) {
+    loadCompatibility();
+  } else {
+    loadingEl.textContent = 'No SKU found for this product.';
+  }
+</script>
