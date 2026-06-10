@@ -4,7 +4,6 @@ const supabase = require('./supabase');
 async function fetchAllShopifyProducts(shop, accessToken) {
   let products = [];
   let url = `https://${shop}/admin/api/2024-01/products.json?limit=250&fields=id,title,handle,variants,images`;
-
   while (url) {
     const res = await fetch(url, {
       headers: {
@@ -12,11 +11,8 @@ async function fetchAllShopifyProducts(shop, accessToken) {
         'Content-Type': 'application/json'
       }
     });
-
     const data = await res.json();
     products = products.concat(data.products || []);
-
-    // Check for next page in Link header
     const linkHeader = res.headers.get('Link');
     if (linkHeader && linkHeader.includes('rel="next"')) {
       const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
@@ -25,7 +21,6 @@ async function fetchAllShopifyProducts(shop, accessToken) {
       url = null;
     }
   }
-
   return products;
 }
 
@@ -33,7 +28,6 @@ async function fetchAllShopifyProducts(shop, accessToken) {
 function mapProduct(product) {
   const variant = product.variants?.[0];
   const image = product.images?.[0];
-
   return {
     sku: variant?.sku || null,
     shopify_product_id: String(product.id),
@@ -50,11 +44,9 @@ function mapProduct(product) {
 // Full sync — used on install and manual trigger
 async function fullSync(shop, accessToken) {
   console.log(`Starting full sync for ${shop}`);
-
   const products = await fetchAllShopifyProducts(shop, accessToken);
   console.log(`Fetched ${products.length} products from Shopify`);
 
-  // Filter out products with no SKU
   const mapped = products
     .map(mapProduct)
     .filter(p => p.sku && p.sku.trim() !== '');
@@ -63,24 +55,70 @@ async function fullSync(shop, accessToken) {
     return { synced: 0, message: 'No products with SKUs found' };
   }
 
-  // Upsert all products into Supabase using SKU as the key
-  const { error } = await supabase
-    .from('shopify_products')
-    .upsert(mapped, { onConflict: 'sku' });
+  // Deduplicate by SKU — keep last occurrence
+  const skuMap = {};
+  mapped.forEach(p => { skuMap[p.sku] = p; });
+  const deduped = Object.values(skuMap);
+  console.log(`After dedup: ${deduped.length} unique SKUs`);
 
-  if (error) {
-    console.error('Supabase upsert error:', error);
-    throw error;
+  const batchSize = 500;
+  let totalSynced = 0;
+
+  for (let i = 0; i < deduped.length; i += batchSize) {
+    const batch = deduped.slice(i, i + batchSize);
+    const skus = batch.map(p => p.sku);
+
+    // Get existing rows for this batch
+    const { data: existing } = await supabase
+      .from('shopify_products')
+      .select('id, sku')
+      .in('sku', skus);
+
+    // Map SKU to first matching row id
+    const existingMap = {};
+    (existing || []).forEach(p => {
+      if (!existingMap[p.sku]) existingMap[p.sku] = p.id;
+    });
+
+    const toInsert = [];
+    const toUpdate = [];
+
+    batch.forEach(p => {
+      if (existingMap[p.sku]) {
+        toUpdate.push({ ...p, id: existingMap[p.sku] });
+      } else {
+        toInsert.push(p);
+      }
+    });
+
+    // Insert new products
+    if (toInsert.length > 0) {
+      const { error } = await supabase
+        .from('shopify_products')
+        .insert(toInsert);
+      if (error) console.error('Insert error:', error);
+    }
+
+    // Update existing products one by one to target first SKU match
+    for (const p of toUpdate) {
+      const { id, ...data } = p;
+      const { error } = await supabase
+        .from('shopify_products')
+        .update(data)
+        .eq('id', id);
+      if (error) console.error('Update error:', error);
+    }
+
+    totalSynced += batch.length;
+    console.log(`Synced batch ${Math.floor(i / batchSize) + 1}: ${totalSynced}/${deduped.length}`);
   }
 
-  console.log(`Synced ${mapped.length} products`);
-  return { synced: mapped.length };
+  return { synced: totalSynced };
 }
 
 // Delta sync — checks for changes every 2 hours
 async function deltaSync(shop, accessToken) {
   console.log(`Starting delta sync for ${shop}`);
-
   const products = await fetchAllShopifyProducts(shop, accessToken);
 
   const mapped = products
@@ -91,44 +129,67 @@ async function deltaSync(shop, accessToken) {
     return { updated: 0, message: 'No products with SKUs found' };
   }
 
+  // Deduplicate by SKU
+  const skuMap = {};
+  mapped.forEach(p => { skuMap[p.sku] = p; });
+  const deduped = Object.values(skuMap);
+
   // Get all existing products from Supabase
   const { data: existing, error: fetchError } = await supabase
     .from('shopify_products')
-    .select('sku, shopify_product_id, product_title, product_handle, price, image_url');
+    .select('id, sku, shopify_product_id, product_title, product_handle, price, image_url');
 
   if (fetchError) throw fetchError;
 
-  // Build lookup map from existing data
+  // Map SKU to first matching row
   const existingMap = {};
-  existing.forEach(p => { existingMap[p.sku] = p; });
+  (existing || []).forEach(p => {
+    if (!existingMap[p.sku]) existingMap[p.sku] = p;
+  });
 
   // Find products that are new or changed
-  const toUpsert = mapped.filter(p => {
+  const toUpdate = [];
+  const toInsert = [];
+
+  deduped.forEach(p => {
     const ex = existingMap[p.sku];
-    if (!ex) return true; // New product
-    // Check if any values changed
-    return (
+    if (!ex) {
+      toInsert.push(p);
+    } else if (
       ex.shopify_product_id !== p.shopify_product_id ||
       ex.product_title !== p.product_title ||
       ex.product_handle !== p.product_handle ||
       ex.price !== p.price ||
       ex.image_url !== p.image_url
-    );
+    ) {
+      toUpdate.push({ ...p, id: ex.id });
+    }
   });
 
-  console.log(`Found ${toUpsert.length} products to update`);
+  console.log(`Found ${toInsert.length} new and ${toUpdate.length} changed products`);
 
-  if (toUpsert.length === 0) {
+  if (toInsert.length === 0 && toUpdate.length === 0) {
     return { updated: 0, message: 'No changes detected' };
   }
 
-  const { error } = await supabase
-    .from('shopify_products')
-    .upsert(toUpsert, { onConflict: 'sku' });
+  // Insert new products
+  if (toInsert.length > 0) {
+    const { error } = await supabase
+      .from('shopify_products')
+      .insert(toInsert);
+    if (error) console.error('Insert error:', error);
+  }
 
-  if (error) throw error;
+  // Update changed products
+  for (const p of toUpdate) {
+    const { id, ...data } = p;
+    await supabase
+      .from('shopify_products')
+      .update(data)
+      .eq('id', id);
+  }
 
-  return { updated: toUpsert.length };
+  return { updated: toInsert.length + toUpdate.length };
 }
 
 module.exports = { fullSync, deltaSync };
