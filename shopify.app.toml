@@ -16,8 +16,10 @@ embedded_app_direct_api_access = true
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,read_themes,write_products,write_themes"
 
-[auth]
-redirect_urls = [ "https://bitsy-ymm-eo.vercel.app/api/auth-callback" ]
+redirect_urls = [ 
+  "https://bitsy-ymm-eo.vercel.app/api/install",
+  "https://bitsy-ymm-eo.vercel.app/api/auth-callback"
+]
 
 [sidekick]
 extensions_summary = "Read FAQ entries stored in the app"
