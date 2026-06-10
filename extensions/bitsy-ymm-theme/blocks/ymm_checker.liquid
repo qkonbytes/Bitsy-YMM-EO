@@ -66,8 +66,7 @@
     Verify
   </button>
 
-  <div id="checker-result" class="bitsy-checker-result" style="display:none;">
-  </div>
+  <div id="checker-result" class="bitsy-checker-result" style="display:none;"></div>
 </div>
 
 <style>
@@ -144,9 +143,9 @@
 </style>
 
 <script>
-  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "https://mpvhnycxwntslepogfuc.supabase.co" }}';
-  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT" }}';
-  const PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
+  const CHECKER_SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  const CHECKER_SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+  const CHECKER_PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
 
   const checkerMake = document.getElementById('checker-make');
   const checkerModel = document.getElementById('checker-model');
@@ -154,28 +153,29 @@
   const checkerBtn = document.getElementById('checker-btn');
   const checkerResult = document.getElementById('checker-result');
 
-  // Load makes
+  const CHECKER_HEADERS = {
+    apikey: CHECKER_SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${CHECKER_SUPABASE_ANON_KEY}`
+  };
+
   async function loadCheckerMakes() {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/vehicle?select=make&order=make.asc`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-    const data = await res.json();
-    const makes = [...new Set(data.map(r => r.make))];
-    makes.forEach(make => {
-      const opt = document.createElement('option');
-      opt.value = make;
-      opt.textContent = make;
-      checkerMake.appendChild(opt);
-    });
+    try {
+      const res = await fetch(
+        `${CHECKER_SUPABASE_URL}/rest/v1/distinct_makes?select=make`,
+        { headers: CHECKER_HEADERS }
+      );
+      const data = await res.json();
+      data.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row.make;
+        opt.textContent = row.make;
+        checkerMake.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Error loading makes:', err);
+    }
   }
 
-  // Load models
   checkerMake.addEventListener('change', async () => {
     const make = checkerMake.value;
     checkerModel.innerHTML = '<option value="">Select Model</option>';
@@ -187,27 +187,24 @@
 
     if (!make) return;
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/vehicle?select=model&make=eq.${encodeURIComponent(make)}&order=model.asc`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-    const data = await res.json();
-    const models = [...new Set(data.map(r => r.model))];
-    models.forEach(model => {
-      const opt = document.createElement('option');
-      opt.value = model;
-      opt.textContent = model;
-      checkerModel.appendChild(opt);
-    });
-    checkerModel.disabled = false;
+    try {
+      const res = await fetch(
+        `${CHECKER_SUPABASE_URL}/rest/v1/distinct_models?select=model&make=eq.${encodeURIComponent(make)}`,
+        { headers: CHECKER_HEADERS }
+      );
+      const data = await res.json();
+      data.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row.model;
+        opt.textContent = row.model;
+        checkerModel.appendChild(opt);
+      });
+      checkerModel.disabled = false;
+    } catch (err) {
+      console.error('Error loading models:', err);
+    }
   });
 
-  // Load years
   checkerModel.addEventListener('change', async () => {
     const make = checkerMake.value;
     const model = checkerModel.value;
@@ -218,33 +215,29 @@
 
     if (!model) return;
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/vehicle?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&order=year.desc`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-    const data = await res.json();
-    const years = [...new Set(data.map(r => r.year))];
-    years.forEach(year => {
-      const opt = document.createElement('option');
-      opt.value = year;
-      opt.textContent = year;
-      checkerYear.appendChild(opt);
-    });
-    checkerYear.disabled = false;
+    try {
+      const res = await fetch(
+        `${CHECKER_SUPABASE_URL}/rest/v1/distinct_years?select=year&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}`,
+        { headers: CHECKER_HEADERS }
+      );
+      const data = await res.json();
+      data.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row.year;
+        opt.textContent = row.year;
+        checkerYear.appendChild(opt);
+      });
+      checkerYear.disabled = false;
+    } catch (err) {
+      console.error('Error loading years:', err);
+    }
   });
 
-  // Enable verify button
   checkerYear.addEventListener('change', () => {
     checkerBtn.disabled = !checkerYear.value;
     checkerResult.style.display = 'none';
   });
 
-  // Verify fitment
   checkerBtn.addEventListener('click', async () => {
     const make = checkerMake.value;
     const model = checkerModel.value;
@@ -253,30 +246,30 @@
     checkerBtn.textContent = 'Checking...';
     checkerBtn.disabled = true;
 
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(PRODUCT_SKU)}&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&select=id&limit=1`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }
-    );
-    const data = await res.json();
+    try {
+      const res = await fetch(
+        `${CHECKER_SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(CHECKER_PRODUCT_SKU)}&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&select=id&limit=1`,
+        { headers: CHECKER_HEADERS }
+      );
+      const data = await res.json();
 
-    checkerResult.style.display = 'block';
-    if (data.length > 0) {
-      checkerResult.className = 'bitsy-checker-result fits';
-      checkerResult.textContent = `✅ Fits your ${year} ${make} ${model}`;
-    } else {
+      checkerResult.style.display = 'block';
+      if (data.length > 0) {
+        checkerResult.className = 'bitsy-checker-result fits';
+        checkerResult.textContent = 'Fits your ' + year + ' ' + make + ' ' + model;
+      } else {
+        checkerResult.className = 'bitsy-checker-result no-fit';
+        checkerResult.textContent = 'Does not fit your ' + year + ' ' + make + ' ' + model;
+      }
+    } catch (err) {
+      checkerResult.style.display = 'block';
       checkerResult.className = 'bitsy-checker-result no-fit';
-      checkerResult.textContent = `❌ Does not fit your ${year} ${make} ${model}`;
+      checkerResult.textContent = 'Error checking fitment. Please try again.';
     }
 
     checkerBtn.textContent = 'Verify';
     checkerBtn.disabled = false;
   });
 
-  // Init
   loadCheckerMakes();
 </script>

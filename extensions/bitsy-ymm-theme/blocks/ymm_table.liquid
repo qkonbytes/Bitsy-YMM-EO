@@ -37,13 +37,13 @@
     <thead style="background-color: {{ block.settings.header_color }}; color: {{ block.settings.header_text_color }};">
       <tr>
         <th id="th-make" class="sortable" data-col="make">
-          Make <span class="sort-icon">↕</span>
+          Make <span class="sort-icon">&#8597;</span>
         </th>
         <th id="th-model" class="sortable" data-col="model">
-          Model <span class="sort-icon">↕</span>
+          Model <span class="sort-icon">&#8597;</span>
         </th>
         <th id="th-year" class="sortable" data-col="year">
-          Year <span class="sort-icon">↕</span>
+          Year <span class="sort-icon">&#8597;</span>
         </th>
       </tr>
     </thead>
@@ -110,9 +110,9 @@
 </style>
 
 <script>
-  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "https://mpvhnycxwntslepogfuc.supabase.co" }}';
-  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT" }}';
-  const PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
+  const TABLE_SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  const TABLE_SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+  const TABLE_PRODUCT_SKU = '{{ product.selected_or_first_available_variant.sku }}';
 
   const tableBody = document.getElementById('bitsy-table-body');
   const tableEl = document.getElementById('bitsy-compat-table');
@@ -124,17 +124,16 @@
   let sortCol = 'make';
   let sortDir = 'asc';
 
-  // Fetch all fitment rows for this SKU
+  const TABLE_HEADERS = {
+    apikey: TABLE_SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${TABLE_SUPABASE_ANON_KEY}`
+  };
+
   async function loadCompatibility() {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(PRODUCT_SKU)}&is_universal=eq.false&select=make,model,year&order=make.asc,model.asc,year.asc`,
-        {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        }
+        `${TABLE_SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(TABLE_PRODUCT_SKU)}&is_universal=eq.false&select=make,model,year&order=make.asc,model.asc,year.asc&limit=1000`,
+        { headers: TABLE_HEADERS }
       );
       const data = await res.json();
       loadingEl.style.display = 'none';
@@ -145,7 +144,7 @@
       }
 
       tableData = data;
-      countEl.textContent = `${data.length} vehicle(s) are compatible with this part.`;
+      countEl.textContent = data.length + ' vehicle(s) are compatible with this part.';
       tableEl.style.display = 'table';
       renderTable();
     } catch (err) {
@@ -153,7 +152,6 @@
     }
   }
 
-  // Render table rows
   function renderTable() {
     const sorted = [...tableData].sort((a, b) => {
       const valA = String(a[sortCol]).toLowerCase();
@@ -163,16 +161,11 @@
       return 0;
     });
 
-    tableBody.innerHTML = sorted.map(row => `
-      <tr>
-        <td>${row.make}</td>
-        <td>${row.model}</td>
-        <td>${row.year}</td>
-      </tr>
-    `).join('');
+    tableBody.innerHTML = sorted.map(row =>
+      '<tr><td>' + row.make + '</td><td>' + row.model + '</td><td>' + row.year + '</td></tr>'
+    ).join('');
   }
 
-  // Sorting
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
@@ -182,14 +175,13 @@
         sortCol = col;
         sortDir = 'asc';
       }
-      document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '↕');
-      th.querySelector('.sort-icon').textContent = sortDir === 'asc' ? '↑' : '↓';
+      document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '\u2195');
+      th.querySelector('.sort-icon').textContent = sortDir === 'asc' ? '\u2191' : '\u2193';
       renderTable();
     });
   });
 
-  // Init
-  if (PRODUCT_SKU) {
+  if (TABLE_PRODUCT_SKU) {
     loadCompatibility();
   } else {
     loadingEl.textContent = 'No SKU found for this product.';
