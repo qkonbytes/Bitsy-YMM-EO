@@ -34,30 +34,29 @@ export default function HomePage() {
     setLoading(false);
   }
 
-async function checkApiStatus() {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(`${VERCEL_URL}/api/health`, {
-      signal: controller.signal,
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json'
+  async function checkApiStatus() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/rpc/check_api_health`,
+        {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: '{}'
+        }
+      );
+      if (res.ok) {
+        setApiStatus('online');
+      } else {
+        setApiStatus('offline');
       }
-    });
-    
-    clearTimeout(timeout);
-    
-    if (res.ok) {
-      setApiStatus('online');
-    } else {
+    } catch {
       setApiStatus('offline');
     }
-  } catch {
-    setApiStatus('offline');
   }
-}
 
   async function loadStats() {
     try {
@@ -81,12 +80,19 @@ async function checkApiStatus() {
       );
       const makesData = await makesRes.json();
 
-      // Unique models
+      // Unique models with exact count
       const modelsRes = await fetch(
         `${SUPABASE_URL}/rest/v1/distinct_models?select=model`,
-        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'count=exact',
+            'Range': '0-0'
+          }
+        }
       );
-      const modelsData = await modelsRes.json();
+      const modelsCount = modelsRes.headers.get('content-range')?.split('/')[1];
 
       // Total shopify products
       const prodRes = await fetch(
@@ -112,7 +118,7 @@ async function checkApiStatus() {
       setStats({
         totalFitments: fitCount || '0',
         uniqueMakes: makesData.length || '0',
-        uniqueModels: modelsData.length || '0',
+        uniqueModels: modelsCount || '0',
         totalProducts: prodCount || '0',
         syncedProducts: syncedCount || '0',
         universalProducts: uniCount || '0',
@@ -138,7 +144,6 @@ async function checkApiStatus() {
       if (data.length > 0 && data[0].synced_at) {
         const last = new Date(data[0].synced_at);
         setLastSync(last.toLocaleString());
-        // Next sync is 2 hours after last sync
         const next = new Date(last.getTime() + 2 * 60 * 60 * 1000);
         setNextSync(next.toLocaleString());
       } else {
@@ -173,18 +178,17 @@ async function checkApiStatus() {
   }
 
   const statCards = [
-    { label: 'Total Fitment Records', value: stats.totalFitments, color: '#4f46e5' },
-    { label: 'Vehicle Makes', value: stats.uniqueMakes, color: '#0891b2' },
-    { label: 'Vehicle Models', value: stats.uniqueModels, color: '#0891b2' },
-    { label: 'Total Products', value: stats.totalProducts, color: '#059669' },
-    { label: 'Synced Products', value: stats.syncedProducts, color: '#059669' },
-    { label: 'Universal Products', value: stats.universalProducts, color: '#d97706' },
+    { label: 'Total Fitment Records', value: stats.totalFitments },
+    { label: 'Vehicle Makes', value: stats.uniqueMakes },
+    { label: 'Vehicle Models', value: stats.uniqueModels },
+    { label: 'Total Products', value: stats.totalProducts },
+    { label: 'Synced Products', value: stats.syncedProducts },
+    { label: 'Universal Products', value: stats.universalProducts },
   ];
 
   return (
     <s-page heading="Bitsy YMM Dashboard">
 
-      {/* API Status Banner */}
       <s-section>
         <s-stack direction="inline" gap="base" alignItems="center">
           <s-text>API Status:</s-text>
@@ -197,7 +201,6 @@ async function checkApiStatus() {
         </s-stack>
       </s-section>
 
-      {/* Stats Grid */}
       <s-section heading="Database Stats">
         {loading ? (
           <s-spinner />
@@ -213,9 +216,7 @@ async function checkApiStatus() {
               >
                 <s-stack gap="tight">
                   <s-text tone="subdued">{card.label}</s-text>
-                  <s-heading>
-                    {card.value ?? '—'}
-                  </s-heading>
+                  <s-heading>{card.value ?? '—'}</s-heading>
                 </s-stack>
               </s-box>
             ))}
@@ -223,7 +224,6 @@ async function checkApiStatus() {
         )}
       </s-section>
 
-      {/* Sync Info */}
       <s-section heading="Shopify Product Sync">
         <s-stack gap="base">
           <s-stack direction="inline" gap="loose">
@@ -236,7 +236,6 @@ async function checkApiStatus() {
               <s-text>{nextSync || '—'}</s-text>
             </s-stack>
           </s-stack>
-
           <s-stack direction="inline" gap="base" alignItems="center">
             <s-button
               variant="primary"
@@ -249,37 +248,23 @@ async function checkApiStatus() {
               <s-text>{syncMessage}</s-text>
             )}
           </s-stack>
-
           <s-text tone="subdued">
-            Products are automatically synced every 2 hours. 
-            The sync uses SKU to detect changes and only updates 
+            Products are automatically synced every 2 hours.
+            The sync uses SKU to detect changes and only updates
             products that have been modified.
           </s-text>
         </s-stack>
       </s-section>
 
-      {/* Quick Links */}
       <s-section heading="Quick Links">
         <s-stack direction="inline" gap="base">
-          <s-button
-            variant="plain"
-            href="https://supabase.com/dashboard"
-            target="_blank"
-          >
+          <s-button variant="plain" href="https://supabase.com/dashboard" target="_blank">
             Supabase Dashboard
           </s-button>
-          <s-button
-            variant="plain"
-            href="https://vercel.com/dashboard"
-            target="_blank"
-          >
+          <s-button variant="plain" href="https://vercel.com/dashboard" target="_blank">
             Vercel Dashboard
           </s-button>
-          <s-button
-            variant="plain"
-            href={`${VERCEL_URL}/api/health`}
-            target="_blank"
-          >
+          <s-button variant="plain" href={`${VERCEL_URL}/api/health`} target="_blank">
             API Health Check
           </s-button>
         </s-stack>
