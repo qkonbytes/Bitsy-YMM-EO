@@ -1,0 +1,317 @@
+{% schema %}
+{
+  "name": "YMM Results",
+  "target": "section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "header_color",
+      "label": "Header Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#000000"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="bitsy-results-wrap" id="bitsy-results-wrap">
+
+  {% comment %} Header showing selected YMM {% endcomment %}
+  <div class="bitsy-results-header" style="border-color: {{ block.settings.header_color }};">
+    <h1 class="bitsy-results-title" id="bitsy-results-title">
+      Finding parts...
+    </h1>
+    <a href="/" class="bitsy-results-change">Change Vehicle</a>
+  </div>
+
+  {% comment %} Loading state {% endcomment %}
+  <div id="bitsy-results-loading" class="bitsy-results-loading">
+    <p>Loading parts for your vehicle...</p>
+  </div>
+
+  {% comment %} Fitted products section {% endcomment %}
+  <div id="bitsy-fitted-section" style="display:none;">
+    <h2 class="bitsy-section-heading">Parts For Your Vehicle</h2>
+    <p id="bitsy-fitted-count" class="bitsy-results-count"></p>
+    <div id="bitsy-fitted-grid" class="bitsy-product-grid"></div>
+  </div>
+
+  {% comment %} Universal products section {% endcomment %}
+  <div id="bitsy-universal-section" style="display:none;">
+    <h2 class="bitsy-section-heading">Universal Fit Parts</h2>
+    <p class="bitsy-results-count">These parts fit all vehicles</p>
+    <div id="bitsy-universal-grid" class="bitsy-product-grid"></div>
+  </div>
+
+  {% comment %} Empty state {% endcomment %}
+  <div id="bitsy-results-empty" class="bitsy-results-empty" style="display:none;">
+    <p>No parts found for your vehicle.</p>
+    <a href="/" class="bitsy-results-back">Search Again</a>
+  </div>
+
+</div>
+
+<style>
+  .bitsy-results-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  .bitsy-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid;
+    margin-bottom: 2rem;
+  }
+  .bitsy-results-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .bitsy-results-change {
+    font-size: 0.9rem;
+    text-decoration: underline;
+    color: #666;
+  }
+  .bitsy-results-loading {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+  }
+  .bitsy-section-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 2rem 0 0.5rem;
+  }
+  .bitsy-results-count {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+  .bitsy-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+  .bitsy-product-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .bitsy-product-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .bitsy-product-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #f5f5f5;
+  }
+  .bitsy-product-card-body {
+    padding: 0.85rem;
+  }
+  .bitsy-product-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .bitsy-product-card-price {
+    font-size: 0.95rem;
+    color: #444;
+    margin-bottom: 0.75rem;
+  }
+  .bitsy-product-card-btn {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    background-color: {{ block.settings.button_color }};
+  }
+  .bitsy-results-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #999;
+  }
+  .bitsy-results-back {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    background: #000;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+</style>
+
+<script>
+  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "" }}';
+  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "" }}';
+  const SHOP_DOMAIN = '{{ shop.permanent_domain }}';
+
+  // Get YMM from URL params
+  const params = new URLSearchParams(window.location.search);
+  const make = params.get('make');
+  const model = params.get('model');
+  const year = params.get('year');
+
+  const titleEl = document.getElementById('bitsy-results-title');
+  const loadingEl = document.getElementById('bitsy-results-loading');
+  const fittedSection = document.getElementById('bitsy-fitted-section');
+  const fittedGrid = document.getElementById('bitsy-fitted-grid');
+  const fittedCount = document.getElementById('bitsy-fitted-count');
+  const universalSection = document.getElementById('bitsy-universal-section');
+  const universalGrid = document.getElementById('bitsy-universal-grid');
+  const emptyEl = document.getElementById('bitsy-results-empty');
+
+  // Format price
+  function formatPrice(price) {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR'
+    }).format(price / 100);
+  }
+
+  // Build product card HTML
+  function buildCard(product) {
+    const image = product.images.edges[0]?.node.url || '';
+    const price = product.priceRange.minVariantPrice.amount;
+    const handle = product.handle;
+    const title = product.title;
+
+    return `
+      <div class="bitsy-product-card">
+        ${image ? `<img src="${image}" alt="${title}" loading="lazy">` : '<div style="aspect-ratio:1;background:#f5f5f5;"></div>'}
+        <div class="bitsy-product-card-body">
+          <p class="bitsy-product-card-title">${title}</p>
+          <p class="bitsy-product-card-price">${formatPrice(price)}</p>
+          <a href="/products/${handle}" class="bitsy-product-card-btn">View Product</a>
+        </div>
+      </div>
+    `;
+  }
+
+  // Fetch Shopify product by ID using Storefront API
+  async function fetchShopifyProducts(shopifyIds) {
+    if (!shopifyIds.length) return [];
+
+    const ids = shopifyIds.map(id => `"gid://shopify/Product/${id}"`).join(',');
+    const query = `{
+      nodes(ids: [${ids}]) {
+        ... on Product {
+          id
+          title
+          handle
+          images(first: 1) {
+            edges { node { url } }
+          }
+          priceRange {
+            minVariantPrice { amount }
+          }
+        }
+      }
+    }`;
+
+    const res = await fetch(`https://${SHOP_DOMAIN}/api/2024-01/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': '{{ shop.metafields.bitsy.storefront_token | default: "" }}'
+      },
+      body: JSON.stringify({ query })
+    });
+
+    const data = await res.json();
+    return data.data?.nodes?.filter(Boolean) || [];
+  }
+
+  // Main load function
+  async function loadResults() {
+    if (!make || !model || !year) {
+      loadingEl.style.display = 'none';
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    titleEl.textContent = `Parts for ${year} ${make} ${model}`;
+
+    try {
+      // Fetch fitted SKUs from Supabase
+      const fitRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/fitment?make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&is_universal=eq.false&select=shopify_product_id`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+      const fitData = await fitRes.json();
+
+      // Fetch universal SKUs from Supabase
+      const uniRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/shopify_products?is_universal=eq.true&select=shopify_product_id`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+      const uniData = await uniRes.json();
+
+      loadingEl.style.display = 'none';
+
+      // Get unique Shopify product IDs
+      const fittedIds = [...new Set(fitData.map(r => r.shopify_product_id).filter(Boolean))];
+      const universalIds = [...new Set(uniData.map(r => r.shopify_product_id).filter(Boolean))];
+
+      // Fetch product details from Shopify
+      const [fittedProducts, universalProducts] = await Promise.all([
+        fetchShopifyProducts(fittedIds),
+        fetchShopifyProducts(universalIds)
+      ]);
+
+      // Render fitted products
+      if (fittedProducts.length > 0) {
+        fittedSection.style.display = 'block';
+        fittedCount.textContent = `${fittedProducts.length} part(s) found for your vehicle`;
+        fittedGrid.innerHTML = fittedProducts.map(buildCard).join('');
+      }
+
+      // Render universal products
+      if (universalProducts.length > 0) {
+        universalSection.style.display = 'block';
+        universalGrid.innerHTML = universalProducts.map(buildCard).join('');
+      }
+
+      // Show empty if nothing found
+      if (fittedProducts.length === 0 && universalProducts.length === 0) {
+        emptyEl.style.display = 'block';
+      }
+
+    } catch (err) {
+      loadingEl.textContent = 'Failed to load results. Please try again.';
+      console.error(err);
+    }
+  }
+
+  loadResults();
+</script>
