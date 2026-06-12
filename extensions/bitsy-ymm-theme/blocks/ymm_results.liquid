@@ -162,8 +162,8 @@
 </style>
 
 <script>
-  const SUPABASE_URL = '{{ shop.metafields.bitsy.supabase_url | default: "https://mpvhnycxwntslepogfuc.supabase.co" }}';
-  const SUPABASE_ANON_KEY = '{{ shop.metafields.bitsy.supabase_anon_key | default: "sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT" }}';
+  const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
   const params = new URLSearchParams(window.location.search);
   const make = params.get('make');
@@ -179,29 +179,28 @@
   const universalGrid = document.getElementById('bitsy-universal-grid');
   const emptyEl = document.getElementById('bitsy-results-empty');
 
-  // Build product card
+  const HEADERS = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+  };
+
   function buildCard(product) {
     const image = product.image_url;
     const title = product.product_title || 'Product';
-    const price = product.price ? `R ${parseFloat(product.price).toFixed(2)}` : '';
+    const price = product.price ? 'R ' + parseFloat(product.price).toFixed(2) : '';
     const handle = product.product_handle;
 
-    return `
-      <div class="bitsy-product-card">
-        ${image
-          ? `<img src="${image}" alt="${title}" loading="lazy">`
-          : `<div class="bitsy-product-card-no-image"></div>`
-        }
-        <div class="bitsy-product-card-body">
-          <p class="bitsy-product-card-title">${title}</p>
-          ${price ? `<p class="bitsy-product-card-price">${price}</p>` : ''}
-          ${handle
-            ? `<a href="/products/${handle}" class="bitsy-product-card-btn">View Product</a>`
-            : ''
-          }
-        </div>
-      </div>
-    `;
+    return '<div class="bitsy-product-card">' +
+      (image
+        ? '<img src="' + image + '" alt="' + title + '" loading="lazy">'
+        : '<div class="bitsy-product-card-no-image"></div>'
+      ) +
+      '<div class="bitsy-product-card-body">' +
+        '<p class="bitsy-product-card-title">' + title + '</p>' +
+        (price ? '<p class="bitsy-product-card-price">' + price + '</p>' : '') +
+        (handle ? '<a href="/products/' + handle + '" class="bitsy-product-card-btn">View Product</a>' : '') +
+      '</div>' +
+    '</div>';
   }
 
   async function loadResults() {
@@ -211,63 +210,62 @@
       return;
     }
 
-    titleEl.textContent = `Parts for ${year} ${make} ${model}`;
+    titleEl.textContent = 'Parts for ' + year + ' ' + make + ' ' + model;
 
     try {
-      // Fetch fitted products — join fitment with shopify_products via sku
+      // Fetch fitted products
       const fitRes = await fetch(
         `${SUPABASE_URL}/rest/v1/fitment?make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)`,
-        {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        }
+        { headers: HEADERS }
       );
       const fitData = await fitRes.json();
 
-      // Fetch universal products directly from shopify_products
+      // Fetch universal products
       const uniRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/shopify_products?is_universal=eq.true&select=shopify_product_id,product_title,product_handle,price,image_url`,
-        {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        }
+        `${SUPABASE_URL}/rest/v1/fitment?make=eq.UNIVERSAL&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)`,
+        { headers: HEADERS }
       );
       const uniData = await uniRes.json();
 
       loadingEl.style.display = 'none';
 
-      // Extract product data from fitted results
-      const fittedProducts = fitData
-        .map(r => r.shopify_products)
-        .filter(Boolean);
-
-      // Deduplicate by shopify_product_id
+      // Extract and deduplicate fitted products
       const seen = new Set();
-      const uniqueFitted = fittedProducts.filter(p => {
-        if (seen.has(p.shopify_product_id)) return false;
-        seen.add(p.shopify_product_id);
-        return true;
-      });
+      const uniqueFitted = fitData
+        .map(r => r.shopify_products)
+        .filter(Boolean)
+        .filter(p => {
+          if (seen.has(p.shopify_product_id)) return false;
+          seen.add(p.shopify_product_id);
+          return true;
+        });
+
+      // Extract and deduplicate universal products
+      const uniSeen = new Set();
+      const uniqueUniversal = uniData
+        .map(r => r.shopify_products)
+        .filter(Boolean)
+        .filter(p => {
+          if (uniSeen.has(p.shopify_product_id)) return false;
+          uniSeen.add(p.shopify_product_id);
+          return true;
+        });
 
       // Render fitted products
       if (uniqueFitted.length > 0) {
         fittedSection.style.display = 'block';
-        fittedCount.textContent = `${uniqueFitted.length} part(s) found for your vehicle`;
+        fittedCount.textContent = uniqueFitted.length + ' part(s) found for your vehicle';
         fittedGrid.innerHTML = uniqueFitted.map(buildCard).join('');
       }
 
       // Render universal products
-      if (uniData.length > 0) {
+      if (uniqueUniversal.length > 0) {
         universalSection.style.display = 'block';
-        universalGrid.innerHTML = uniData.map(buildCard).join('');
+        universalGrid.innerHTML = uniqueUniversal.map(buildCard).join('');
       }
 
       // Empty state
-      if (uniqueFitted.length === 0 && uniData.length === 0) {
+      if (uniqueFitted.length === 0 && uniqueUniversal.length === 0) {
         emptyEl.style.display = 'block';
       }
 
