@@ -534,8 +534,55 @@
 </style>
 
 <script>
-  const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+
+const MAKE_TO_VIEW = {
+  'Aprilia':    'fitment_aprilia',
+  'Arctic Cat': 'fitment_arctic_cat',
+  'Beta':       'fitment_beta',
+  'BMW':        'fitment_bmw',
+  'Can-Am':     'fitment_can_am',
+  'CF-Moto':    'fitment_cf_moto',
+  'Dinli':      'fitment_dinli',
+  'Ducati':     'fitment_ducati',
+  'Gas-Gas':    'fitment_gas_gas',
+  'Harley':     'fitment_harley',
+  'Honda':      'fitment_honda',
+  'Husaberg':   'fitment_husaberg',
+  'Husqvarna':  'fitment_husqvarna',
+  'Jlo-cuyuna': 'fitment_jlo_cuyuna',
+  'Kawasaki':   'fitment_kawasaki',
+  'KAYO':       'fitment_kayo',
+  'Kohler':     'fitment_kohler',
+  'KTM':        'fitment_ktm',
+  'Kubota':     'fitment_kubota',
+  'Kymco':      'fitment_kymco',
+  'Lloyd':      'fitment_lloyd',
+  'Lynx':       'fitment_lynx',
+  'Maico':      'fitment_maico',
+  'Maxam':      'fitment_maxam',
+  'Montesa':    'fitment_montesa',
+  'Moto ski':   'fitment_moto_ski',
+  'Moto Ski':   'fitment_moto_ski',
+  'Moto_Guzzi': 'fitment_moto_guzzi',
+  'Odes':       'fitment_odes',
+  'Polaris':    'fitment_polaris',
+  'Redcat':     'fitment_redcat',
+  'Rieju':      'fitment_rieju',
+  'Rupp':       'fitment_rupp',
+  'Sachs':      'fitment_sachs',
+  'Sea-Doo':    'fitment_sea_doo',
+  'Segway':     'fitment_segway',
+  'Sherco':     'fitment_sherco',
+  'Ski-Doo':    'fitment_ski_doo',
+  'Stark':      'fitment_stark',
+  'Suzuki':     'fitment_suzuki',
+  'TM':         'fitment_tm',
+  'Triumph':    'fitment_triumph',
+  'Yamaha':     'fitment_yamaha'
+};
+
   const SHOPIFY_DOMAIN = window.location.hostname;
 
   const params = new URLSearchParams(window.location.search);
@@ -633,36 +680,39 @@
 
   // ── Load fitment products from Supabase ──
   async function loadFittedProducts() {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/fitment?make=eq.${encodeURIComponent(SELECTED_MAKE)}&model=eq.${encodeURIComponent(SELECTED_MODEL)}&year=eq.${encodeURIComponent(SELECTED_YEAR)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=500`,
-      { headers: HEADERS }
-    );
-    const data = await res.json();
+  // Use brand-specific materialized view for faster queries
+  const view = MAKE_TO_VIEW[SELECTED_MAKE] || 'fitment';
 
-    // Deduplicate by shopify_product_id
-    const seen = new Set();
-    const products = [];
-    for (const row of data) {
-      const p = row.shopify_products;
-      if (!p || !p.shopify_product_id) continue;
-      if (seen.has(p.shopify_product_id)) continue;
-      seen.add(p.shopify_product_id);
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${view}?model=eq.${encodeURIComponent(SELECTED_MODEL)}&year=eq.${encodeURIComponent(SELECTED_YEAR)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=500`,
+    { headers: HEADERS }
+  );
+  const data = await res.json();
 
-      // Enrich with Shopify data for vendor, type, tags, inventory
-      if (p.product_handle) {
-        const shopifyData = await fetchShopifyProduct(p.product_handle);
-        if (shopifyData) {
-          p.vendor = shopifyData.vendor || '';
-          p.product_type = shopifyData.type || '';
-          p.tags = shopifyData.tags || [];
-          p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
-          p.collections = shopifyData.collections || [];
-        }
+  // Deduplicate by shopify_product_id
+  const seen = new Set();
+  const products = [];
+  for (const row of data) {
+    const p = row.shopify_products;
+    if (!p || !p.shopify_product_id) continue;
+    if (seen.has(p.shopify_product_id)) continue;
+    seen.add(p.shopify_product_id);
+
+    // Enrich with Shopify data for vendor, type, tags, inventory
+    if (p.product_handle) {
+      const shopifyData = await fetchShopifyProduct(p.product_handle);
+      if (shopifyData) {
+        p.vendor = shopifyData.vendor || '';
+        p.product_type = shopifyData.type || '';
+        p.tags = shopifyData.tags || [];
+        p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
+        p.collections = shopifyData.collections || [];
       }
-      products.push(p);
     }
-    return products;
+    products.push(p);
   }
+  return products;
+}
 
   // ── Load universal products ──
   async function loadUniversalProducts() {
