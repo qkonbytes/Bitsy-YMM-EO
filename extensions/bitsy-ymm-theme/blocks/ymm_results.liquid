@@ -5,275 +5,887 @@
   "settings": [
     {
       "type": "color",
-      "id": "header_color",
-      "label": "Header Color",
-      "default": "#000000"
+      "id": "accent_color",
+      "label": "Accent Color",
+      "default": "#e63e2f"
     },
     {
       "type": "color",
       "id": "button_color",
       "label": "Button Color",
-      "default": "#000000"
+      "default": "#111111"
     }
   ]
 }
 {% endschema %}
 
-<div class="bitsy-results-wrap" id="bitsy-results-wrap">
+<div class="bymm-wrap">
 
-  <div class="bitsy-results-header" style="border-color: {{ block.settings.header_color }};">
-    <h1 class="bitsy-results-title" id="bitsy-results-title">
-      Finding parts...
-    </h1>
-    <a href="/" class="bitsy-results-change">Change Vehicle</a>
+  <!-- Header -->
+  <div class="bymm-header">
+    <div class="bymm-header-left">
+      <span class="bymm-label">Results for</span>
+      <h1 class="bymm-title" id="bymm-title">Loading...</h1>
+    </div>
+    <a href="/" class="bymm-change">Change vehicle</a>
   </div>
 
-  <div id="bitsy-results-loading" class="bitsy-results-loading">
-    <p>Loading parts for your vehicle...</p>
+  <!-- Collection Blocks -->
+  <div class="bymm-collections" id="bymm-collections">
+    <button class="bymm-col-btn active" data-collection="all">All Parts</button>
   </div>
 
-  <div id="bitsy-fitted-section" style="display:none;">
-    <h2 class="bitsy-section-heading">Parts For Your Vehicle</h2>
-    <p id="bitsy-fitted-count" class="bitsy-results-count"></p>
-    <div id="bitsy-fitted-grid" class="bitsy-product-grid"></div>
+  <!-- Main Layout -->
+  <div class="bymm-layout">
+
+    <!-- Filters Sidebar -->
+    <aside class="bymm-filters" id="bymm-filters">
+      <div class="bymm-filter-header">
+        <span>Filters</span>
+        <button class="bymm-clear-btn" id="bymm-clear">Clear all</button>
+      </div>
+
+      <!-- Vendor -->
+      <div class="bymm-filter-group">
+        <button class="bymm-filter-title" data-target="filter-vendor">
+          Vendor <span class="bymm-chevron">&#9660;</span>
+        </button>
+        <div class="bymm-filter-body" id="filter-vendor"></div>
+      </div>
+
+      <!-- Product Type -->
+      <div class="bymm-filter-group">
+        <button class="bymm-filter-title" data-target="filter-type">
+          Product Type <span class="bymm-chevron">&#9660;</span>
+        </button>
+        <div class="bymm-filter-body" id="filter-type"></div>
+      </div>
+
+      <!-- Price Range -->
+      <div class="bymm-filter-group">
+        <button class="bymm-filter-title" data-target="filter-price">
+          Price <span class="bymm-chevron">&#9660;</span>
+        </button>
+        <div class="bymm-filter-body" id="filter-price">
+          <div class="bymm-price-inputs">
+            <input type="number" id="price-min" placeholder="Min" class="bymm-price-input">
+            <span>—</span>
+            <input type="number" id="price-max" placeholder="Max" class="bymm-price-input">
+          </div>
+          <button class="bymm-apply-price" id="bymm-apply-price">Apply</button>
+        </div>
+      </div>
+
+      <!-- In Stock -->
+      <div class="bymm-filter-group">
+        <label class="bymm-toggle-label">
+          <input type="checkbox" id="filter-instock" class="bymm-toggle-input">
+          <span class="bymm-toggle-track">
+            <span class="bymm-toggle-thumb"></span>
+          </span>
+          In stock only
+        </label>
+      </div>
+
+      <!-- Tags -->
+      <div class="bymm-filter-group">
+        <button class="bymm-filter-title" data-target="filter-tags">
+          Tags <span class="bymm-chevron">&#9660;</span>
+        </button>
+        <div class="bymm-filter-body" id="filter-tags"></div>
+      </div>
+    </aside>
+
+    <!-- Product Area -->
+    <div class="bymm-product-area">
+
+      <!-- Sort + Count bar -->
+      <div class="bymm-sort-bar">
+        <span class="bymm-count" id="bymm-count"></span>
+        <select class="bymm-sort-select" id="bymm-sort">
+          <option value="default">Sort: Featured</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="title-asc">Name: A–Z</option>
+          <option value="title-desc">Name: Z–A</option>
+        </select>
+      </div>
+
+      <!-- Loading -->
+      <div id="bymm-loading" class="bymm-loading">
+        <div class="bymm-spinner"></div>
+        <p>Finding parts for your vehicle...</p>
+      </div>
+
+      <!-- Product Grid -->
+      <div id="bymm-grid" class="bymm-grid" style="display:none;"></div>
+
+      <!-- Empty State -->
+      <div id="bymm-empty" class="bymm-empty" style="display:none;">
+        <p>No parts found for your vehicle with the current filters.</p>
+        <button class="bymm-clear-btn-lg" id="bymm-clear-2">Clear filters</button>
+      </div>
+
+    </div>
   </div>
 
-  <div id="bitsy-universal-section" style="display:none;">
-    <h2 class="bitsy-section-heading">Universal Fit Parts</h2>
-    <p class="bitsy-results-count">These parts fit all vehicles</p>
-    <div id="bitsy-universal-grid" class="bitsy-product-grid"></div>
-  </div>
-
-  <div id="bitsy-results-empty" class="bitsy-results-empty" style="display:none;">
-    <p>No parts found for your vehicle.</p>
-    <a href="/" class="bitsy-results-back">Search Again</a>
+  <!-- Universal Products Section -->
+  <div class="bymm-universal" id="bymm-universal" style="display:none;">
+    <div class="bymm-universal-header">
+      <h2 class="bymm-universal-title">Universal Fit Parts</h2>
+      <p class="bymm-universal-sub">These parts are compatible with all vehicles</p>
+    </div>
+    <div id="bymm-universal-grid" class="bymm-grid bymm-grid-universal"></div>
   </div>
 
 </div>
 
 <style>
-  .bitsy-results-wrap {
-    max-width: 1200px;
+  /* ── Base ── */
+  .bymm-wrap {
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem 3rem;
+    font-family: inherit;
   }
-  .bitsy-results-header {
+
+  /* ── Header ── */
+  .bymm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #111;
+    margin-bottom: 1.25rem;
+  }
+  .bymm-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #999;
+    margin-bottom: 0.2rem;
+  }
+  .bymm-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+  }
+  .bymm-change {
+    font-size: 0.85rem;
+    color: {{ block.settings.accent_color }};
+    text-decoration: underline;
+    white-space: nowrap;
+    margin-left: 1rem;
+  }
+
+  /* ── Collection Blocks ── */
+  .bymm-collections {
+    display: flex;
+    gap: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    scrollbar-width: none;
+  }
+  .bymm-collections::-webkit-scrollbar { display: none; }
+  .bymm-col-btn {
+    flex-shrink: 0;
+    padding: 0.5rem 1.1rem;
+    border: 1.5px solid #ddd;
+    border-radius: 2rem;
+    background: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .bymm-col-btn:hover {
+    border-color: #111;
+  }
+  .bymm-col-btn.active {
+    background: #111;
+    color: white;
+    border-color: #111;
+  }
+
+  /* ── Layout ── */
+  .bymm-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* ── Filters ── */
+  .bymm-filters {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1rem;
+    position: sticky;
+    top: 1rem;
+  }
+  .bymm-filter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid;
-    margin-bottom: 2rem;
-  }
-  .bitsy-results-title {
-    font-size: 1.5rem;
+    margin-bottom: 1rem;
     font-weight: 700;
-    margin: 0;
+    font-size: 0.95rem;
   }
-  .bitsy-results-change {
-    font-size: 0.9rem;
+  .bymm-clear-btn {
+    font-size: 0.78rem;
+    color: {{ block.settings.accent_color }};
+    background: none;
+    border: none;
+    cursor: pointer;
     text-decoration: underline;
+  }
+  .bymm-filter-group {
+    border-top: 1px solid #f0f0f0;
+    padding: 0.65rem 0;
+  }
+  .bymm-filter-title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+  }
+  .bymm-chevron {
+    font-size: 0.65rem;
+    transition: transform 0.2s;
+  }
+  .bymm-filter-title.open .bymm-chevron {
+    transform: rotate(180deg);
+  }
+  .bymm-filter-body {
+    margin-top: 0.6rem;
+    display: none;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .bymm-filter-body.open {
+    display: flex;
+  }
+  .bymm-filter-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .bymm-filter-check input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #111;
+  }
+
+  /* Price inputs */
+  .bymm-price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .bymm-price-input {
+    width: 70px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .bymm-apply-price {
+    width: 100%;
+    padding: 0.4rem;
+    background: #111;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+
+  /* Toggle */
+  .bymm-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bymm-toggle-input { display: none; }
+  .bymm-toggle-track {
+    width: 36px;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .bymm-toggle-input:checked + .bymm-toggle-track {
+    background: #111;
+  }
+  .bymm-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb {
+    transform: translateX(16px);
+  }
+
+  /* ── Sort Bar ── */
+  .bymm-sort-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  .bymm-count {
+    font-size: 0.85rem;
     color: #666;
   }
-  .bitsy-results-loading {
-    text-align: center;
-    padding: 3rem;
-    color: #999;
+  .bymm-sort-select {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: white;
+    cursor: pointer;
   }
-  .bitsy-section-heading {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin: 2rem 0 0.5rem;
-  }
-  .bitsy-results-count {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 1.5rem;
-  }
-  .bitsy-product-grid {
+
+  /* ── Product Grid ── */
+  .bymm-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
   }
-  .bitsy-product-card {
+  .bymm-card {
     border: 1px solid #e5e5e5;
     border-radius: 6px;
     overflow: hidden;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, transform 0.2s;
+    background: white;
   }
-  .bitsy-product-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  .bymm-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
   }
-  .bitsy-product-card img {
+  .bymm-card-img {
     width: 100%;
     aspect-ratio: 1;
     object-fit: cover;
-    background: #f5f5f5;
+    background: #f7f7f7;
+    display: block;
   }
-  .bitsy-product-card-no-image {
+  .bymm-card-no-img {
     width: 100%;
     aspect-ratio: 1;
-    background: #f5f5f5;
+    background: #f7f7f7;
   }
-  .bitsy-product-card-body {
-    padding: 0.85rem;
+  .bymm-card-body {
+    padding: 0.75rem;
   }
-  .bitsy-product-card-title {
-    font-size: 0.9rem;
+  .bymm-card-vendor {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #999;
+    margin-bottom: 0.2rem;
+  }
+  .bymm-card-title {
+    font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 0.4rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.3;
   }
-  .bitsy-product-card-price {
+  .bymm-card-price {
     font-size: 0.95rem;
-    color: #444;
-    margin-bottom: 0.75rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.65rem;
   }
-  .bitsy-product-card-btn {
+  .bymm-card-btn {
     display: block;
     width: 100%;
-    padding: 0.6rem;
+    padding: 0.55rem;
     text-align: center;
+    color: white;
+    background: {{ block.settings.button_color }};
+    border: none;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .bymm-card-btn:hover { opacity: 0.85; }
+  .bymm-card-oos {
+    display: block;
+    width: 100%;
+    padding: 0.55rem;
+    text-align: center;
+    color: #999;
+    background: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+
+  /* ── Loading ── */
+  .bymm-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+  }
+  .bymm-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #eee;
+    border-top-color: #111;
+    border-radius: 50%;
+    animation: bymm-spin 0.7s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes bymm-spin { to { transform: rotate(360deg); } }
+
+  /* ── Empty ── */
+  .bymm-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+  }
+  .bymm-clear-btn-lg {
+    margin-top: 1rem;
+    padding: 0.65rem 1.5rem;
+    background: #111;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 0.9rem;
     cursor: pointer;
-    text-decoration: none;
-    background-color: {{ block.settings.button_color }};
+    font-size: 0.9rem;
   }
-  .bitsy-results-empty {
-    text-align: center;
-    padding: 3rem;
+
+  /* ── Universal Section ── */
+  .bymm-universal {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f0f0f0;
+  }
+  .bymm-universal-header {
+    margin-bottom: 1.5rem;
+  }
+  .bymm-universal-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0 0 0.3rem;
+  }
+  .bymm-universal-sub {
+    font-size: 0.85rem;
     color: #999;
+    margin: 0;
   }
-  .bitsy-results-back {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.75rem 2rem;
-    background: #000;
-    color: white;
-    border-radius: 4px;
-    text-decoration: none;
+  .bymm-grid-universal {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    .bymm-layout {
+      grid-template-columns: 1fr;
+    }
+    .bymm-filters {
+      position: static;
+    }
+    .bymm-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .bymm-grid-universal {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .bymm-title {
+      font-size: 1.2rem;
+    }
   }
 </style>
 
 <script>
   const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+  const SHOPIFY_DOMAIN = window.location.hostname;
 
   const params = new URLSearchParams(window.location.search);
-  const make = params.get('make');
-  const model = params.get('model');
-  const year = params.get('year');
-
-  const titleEl = document.getElementById('bitsy-results-title');
-  const loadingEl = document.getElementById('bitsy-results-loading');
-  const fittedSection = document.getElementById('bitsy-fitted-section');
-  const fittedGrid = document.getElementById('bitsy-fitted-grid');
-  const fittedCount = document.getElementById('bitsy-fitted-count');
-  const universalSection = document.getElementById('bitsy-universal-section');
-  const universalGrid = document.getElementById('bitsy-universal-grid');
-  const emptyEl = document.getElementById('bitsy-results-empty');
+  const SELECTED_MAKE  = params.get('make');
+  const SELECTED_MODEL = params.get('model');
+  const SELECTED_YEAR  = params.get('year');
 
   const HEADERS = {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`
   };
 
-  function buildCard(product) {
-    const image = product.image_url;
-    const title = product.product_title || 'Product';
-    const price = product.price ? 'R ' + parseFloat(product.price).toFixed(2) : '';
-    const handle = product.product_handle;
+  // State
+  let allProducts = [];
+  let filteredProducts = [];
+  let activeCollection = 'all';
+  let activeVendors = new Set();
+  let activeTypes = new Set();
+  let activeTags = new Set();
+  let minPrice = null;
+  let maxPrice = null;
+  let inStockOnly = false;
+  let sortOrder = 'default';
 
-    return '<div class="bitsy-product-card">' +
-      (image
-        ? '<img src="' + image + '" alt="' + title + '" loading="lazy">'
-        : '<div class="bitsy-product-card-no-image"></div>'
-      ) +
-      '<div class="bitsy-product-card-body">' +
-        '<p class="bitsy-product-card-title">' + title + '</p>' +
-        (price ? '<p class="bitsy-product-card-price">' + price + '</p>' : '') +
-        (handle ? '<a href="/products/' + handle + '" class="bitsy-product-card-btn">View Product</a>' : '') +
-      '</div>' +
-    '</div>';
+  // DOM refs
+  const titleEl      = document.getElementById('bymm-title');
+  const loadingEl    = document.getElementById('bymm-loading');
+  const gridEl       = document.getElementById('bymm-grid');
+  const emptyEl      = document.getElementById('bymm-empty');
+  const countEl      = document.getElementById('bymm-count');
+  const collectionsEl = document.getElementById('bymm-collections');
+  const universalEl  = document.getElementById('bymm-universal');
+  const uniGridEl    = document.getElementById('bymm-universal-grid');
+
+  // ── Build product card ──
+  function buildCard(p) {
+    const img    = p.image_url || '';
+    const title  = p.product_title || 'Product';
+    const price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
+    const handle = p.product_handle || '';
+    const vendor = p.vendor || '';
+    const inStock = p.inventory_quantity === null || p.inventory_quantity > 0;
+
+    return '<div class="bymm-card">' +
+      (img ? '<img class="bymm-card-img" src="' + img + '" alt="' + title + '" loading="lazy">'
+           : '<div class="bymm-card-no-img"></div>') +
+      '<div class="bymm-card-body">' +
+        (vendor ? '<p class="bymm-card-vendor">' + vendor + '</p>' : '') +
+        '<p class="bymm-card-title">' + title + '</p>' +
+        (price ? '<p class="bymm-card-price">' + price + '</p>' : '') +
+        (handle
+          ? (inStock
+              ? '<a href="/products/' + handle + '" class="bymm-card-btn">View Product</a>'
+              : '<span class="bymm-card-oos">Out of stock</span>')
+          : '') +
+      '</div></div>';
   }
 
-  async function loadResults() {
-    if (!make || !model || !year) {
+  // ── Fetch Shopify product details via Storefront-style URL ──
+  async function fetchShopifyProduct(handle) {
+    try {
+      const res = await fetch('/products/' + handle + '.js');
+      if (!res.ok) return null;
+      return await res.json();
+    } catch { return null; }
+  }
+
+  // ── Fetch collections from Shopify ──
+  async function loadCollections() {
+    try {
+      const res = await fetch('/collections.js?limit=20');
+      if (!res.ok) return;
+      const data = await res.json();
+      const cols = data.collections || [];
+      cols.forEach(col => {
+        const btn = document.createElement('button');
+        btn.className = 'bymm-col-btn';
+        btn.dataset.collection = col.handle;
+        btn.textContent = col.title;
+        btn.addEventListener('click', () => selectCollection(col.handle));
+        collectionsEl.appendChild(btn);
+      });
+    } catch(e) {
+      console.error('Collections error:', e);
+    }
+  }
+
+  function selectCollection(handle) {
+    activeCollection = handle;
+    document.querySelectorAll('.bymm-col-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.collection === handle);
+    });
+    applyFilters();
+  }
+
+  // ── Load fitment products from Supabase ──
+  async function loadFittedProducts() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/fitment?make=eq.${encodeURIComponent(SELECTED_MAKE)}&model=eq.${encodeURIComponent(SELECTED_MODEL)}&year=eq.${encodeURIComponent(SELECTED_YEAR)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=500`,
+      { headers: HEADERS }
+    );
+    const data = await res.json();
+
+    // Deduplicate by shopify_product_id
+    const seen = new Set();
+    const products = [];
+    for (const row of data) {
+      const p = row.shopify_products;
+      if (!p || !p.shopify_product_id) continue;
+      if (seen.has(p.shopify_product_id)) continue;
+      seen.add(p.shopify_product_id);
+
+      // Enrich with Shopify data for vendor, type, tags, inventory
+      if (p.product_handle) {
+        const shopifyData = await fetchShopifyProduct(p.product_handle);
+        if (shopifyData) {
+          p.vendor = shopifyData.vendor || '';
+          p.product_type = shopifyData.type || '';
+          p.tags = shopifyData.tags || [];
+          p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
+          p.collections = shopifyData.collections || [];
+        }
+      }
+      products.push(p);
+    }
+    return products;
+  }
+
+  // ── Load universal products ──
+  async function loadUniversalProducts() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/fitment?make=eq.UNIVERSAL&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=200`,
+      { headers: HEADERS }
+    );
+    const data = await res.json();
+
+    const seen = new Set();
+    const products = [];
+    for (const row of data) {
+      const p = row.shopify_products;
+      if (!p || !p.shopify_product_id) continue;
+      if (seen.has(p.shopify_product_id)) continue;
+      seen.add(p.shopify_product_id);
+
+      if (p.product_handle) {
+        const shopifyData = await fetchShopifyProduct(p.product_handle);
+        if (shopifyData) {
+          p.vendor = shopifyData.vendor || '';
+          p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
+        }
+      }
+      products.push(p);
+    }
+    return products;
+  }
+
+  // ── Build filter options ──
+  function buildFilters(products) {
+    const vendors = [...new Set(products.map(p => p.vendor).filter(Boolean))].sort();
+    const types   = [...new Set(products.map(p => p.product_type).filter(Boolean))].sort();
+    const tags    = [...new Set(products.flatMap(p => p.tags || []))].sort();
+
+    renderCheckboxes('filter-vendor', vendors, activeVendors, v => {
+      activeVendors.has(v) ? activeVendors.delete(v) : activeVendors.add(v);
+      applyFilters();
+    });
+
+    renderCheckboxes('filter-type', types, activeTypes, v => {
+      activeTypes.has(v) ? activeTypes.delete(v) : activeTypes.add(v);
+      applyFilters();
+    });
+
+    renderCheckboxes('filter-tags', tags, activeTags, v => {
+      activeTags.has(v) ? activeTags.delete(v) : activeTags.add(v);
+      applyFilters();
+    });
+  }
+
+  function renderCheckboxes(containerId, values, activeSet, onChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    if (values.length === 0) {
+      container.innerHTML = '<span style="font-size:0.78rem;color:#bbb">None available</span>';
+      return;
+    }
+    values.forEach(val => {
+      const label = document.createElement('label');
+      label.className = 'bymm-filter-check';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = activeSet.has(val);
+      cb.addEventListener('change', () => onChange(val));
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(val));
+      container.appendChild(label);
+    });
+  }
+
+  // ── Apply all filters ──
+  function applyFilters() {
+    let result = [...allProducts];
+
+    // Collection filter
+    if (activeCollection !== 'all') {
+      result = result.filter(p =>
+        (p.collections || []).some(c => c.handle === activeCollection)
+      );
+    }
+
+    // Vendor filter
+    if (activeVendors.size > 0) {
+      result = result.filter(p => activeVendors.has(p.vendor));
+    }
+
+    // Type filter
+    if (activeTypes.size > 0) {
+      result = result.filter(p => activeTypes.has(p.product_type));
+    }
+
+    // Tags filter
+    if (activeTags.size > 0) {
+      result = result.filter(p =>
+        (p.tags || []).some(t => activeTags.has(t))
+      );
+    }
+
+    // Price filter
+    if (minPrice !== null) {
+      result = result.filter(p => parseFloat(p.price || 0) >= minPrice);
+    }
+    if (maxPrice !== null) {
+      result = result.filter(p => parseFloat(p.price || 0) <= maxPrice);
+    }
+
+    // In stock filter
+    if (inStockOnly) {
+      result = result.filter(p => p.inventory_quantity === null || p.inventory_quantity > 0);
+    }
+
+    // Sort
+    if (sortOrder === 'price-asc') {
+      result.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+    } else if (sortOrder === 'price-desc') {
+      result.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+    } else if (sortOrder === 'title-asc') {
+      result.sort((a, b) => (a.product_title || '').localeCompare(b.product_title || ''));
+    } else if (sortOrder === 'title-desc') {
+      result.sort((a, b) => (b.product_title || '').localeCompare(a.product_title || ''));
+    }
+
+    filteredProducts = result;
+    renderGrid();
+  }
+
+  // ── Render grid ──
+  function renderGrid() {
+    countEl.textContent = filteredProducts.length + ' part(s) found';
+
+    if (filteredProducts.length === 0) {
+      gridEl.style.display = 'none';
+      emptyEl.style.display = 'block';
+    } else {
+      gridEl.style.display = 'grid';
+      emptyEl.style.display = 'none';
+      gridEl.innerHTML = filteredProducts.map(buildCard).join('');
+    }
+  }
+
+  // ── Clear all filters ──
+  function clearFilters() {
+    activeVendors.clear();
+    activeTypes.clear();
+    activeTags.clear();
+    minPrice = null;
+    maxPrice = null;
+    inStockOnly = false;
+    activeCollection = 'all';
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    document.getElementById('filter-instock').checked = false;
+    document.querySelectorAll('.bymm-col-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.collection === 'all');
+    });
+    document.querySelectorAll('.bymm-filter-check input').forEach(cb => cb.checked = false);
+    applyFilters();
+  }
+
+  // ── Filter accordion ──
+  document.querySelectorAll('.bymm-filter-title').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body = document.getElementById(btn.dataset.target);
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      btn.classList.toggle('open', !isOpen);
+    });
+    // Open by default
+    const body = document.getElementById(btn.dataset.target);
+    if (body) { body.classList.add('open'); btn.classList.add('open'); }
+  });
+
+  // ── Event listeners ──
+  document.getElementById('bymm-clear').addEventListener('click', clearFilters);
+  document.getElementById('bymm-clear-2').addEventListener('click', clearFilters);
+  document.getElementById('filter-instock').addEventListener('change', e => {
+    inStockOnly = e.target.checked;
+    applyFilters();
+  });
+  document.getElementById('bymm-sort').addEventListener('change', e => {
+    sortOrder = e.target.value;
+    applyFilters();
+  });
+  document.getElementById('bymm-apply-price').addEventListener('click', () => {
+    const minVal = document.getElementById('price-min').value;
+    const maxVal = document.getElementById('price-max').value;
+    minPrice = minVal ? parseFloat(minVal) : null;
+    maxPrice = maxVal ? parseFloat(maxVal) : null;
+    applyFilters();
+  });
+
+  // ── Main init ──
+  async function init() {
+    if (!SELECTED_MAKE || !SELECTED_MODEL || !SELECTED_YEAR) {
       loadingEl.style.display = 'none';
       emptyEl.style.display = 'block';
       return;
     }
 
-    titleEl.textContent = 'Parts for ' + year + ' ' + make + ' ' + model;
+    titleEl.textContent = SELECTED_YEAR + ' ' + SELECTED_MAKE + ' ' + SELECTED_MODEL;
 
-    try {
-      // Fetch fitted products
-      const fitRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/fitment?make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)`,
-        { headers: HEADERS }
-      );
-      const fitData = await fitRes.json();
+    await loadCollections();
 
-      // Fetch universal products
-      const uniRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/fitment?make=eq.UNIVERSAL&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)`,
-        { headers: HEADERS }
-      );
-      const uniData = await uniRes.json();
+    const [fitted, universal] = await Promise.all([
+      loadFittedProducts(),
+      loadUniversalProducts()
+    ]);
 
-      loadingEl.style.display = 'none';
+    allProducts = fitted;
+    loadingEl.style.display = 'none';
+    gridEl.style.display = 'grid';
 
-      // Extract and deduplicate fitted products
-      const seen = new Set();
-      const uniqueFitted = fitData
-        .map(r => r.shopify_products)
-        .filter(Boolean)
-        .filter(p => {
-          if (seen.has(p.shopify_product_id)) return false;
-          seen.add(p.shopify_product_id);
-          return true;
-        });
+    buildFilters(allProducts);
+    applyFilters();
 
-      // Extract and deduplicate universal products
-      const uniSeen = new Set();
-      const uniqueUniversal = uniData
-        .map(r => r.shopify_products)
-        .filter(Boolean)
-        .filter(p => {
-          if (uniSeen.has(p.shopify_product_id)) return false;
-          uniSeen.add(p.shopify_product_id);
-          return true;
-        });
-
-      // Render fitted products
-      if (uniqueFitted.length > 0) {
-        fittedSection.style.display = 'block';
-        fittedCount.textContent = uniqueFitted.length + ' part(s) found for your vehicle';
-        fittedGrid.innerHTML = uniqueFitted.map(buildCard).join('');
-      }
-
-      // Render universal products
-      if (uniqueUniversal.length > 0) {
-        universalSection.style.display = 'block';
-        universalGrid.innerHTML = uniqueUniversal.map(buildCard).join('');
-      }
-
-      // Empty state
-      if (uniqueFitted.length === 0 && uniqueUniversal.length === 0) {
-        emptyEl.style.display = 'block';
-      }
-
-    } catch (err) {
-      loadingEl.textContent = 'Failed to load results. Please try again.';
-      console.error(err);
+    // Render universal section
+    if (universal.length > 0) {
+      universalEl.style.display = 'block';
+      uniGridEl.innerHTML = universal.map(buildCard).join('');
     }
   }
 
-  loadResults();
+  init();
 </script>
