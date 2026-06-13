@@ -97,7 +97,7 @@
       </div>
     </aside>
 
-    <!-- Product Area -->
+<!-- Product Area -->
     <div class="bymm-product-area">
       <div class="bymm-sort-bar">
         <span class="bymm-count" id="bymm-count"></span>
@@ -109,12 +109,15 @@
           <option value="title-desc">Name: Z–A</option>
         </select>
       </div>
-
       <div id="bymm-grid" class="bymm-grid"></div>
-
       <div id="bymm-empty" class="bymm-empty" style="display:none;">
         <p>No parts found with the current filters.</p>
         <button class="bymm-back-btn" id="bymm-clear-2">Clear filters</button>
+      </div>
+      <div id="bymm-show-more-wrap" style="display:none; text-align:center; margin-top:1.5rem;">
+        <button id="bymm-show-more" class="bymm-show-more-btn">
+          Show More <span id="bymm-remaining"></span>
+        </button>
       </div>
     </div>
   </div>
@@ -463,6 +466,21 @@
     .bymm-grid { grid-template-columns: repeat(2, 1fr); }
     .bymm-title { font-size: 1.2rem; }
   }
+.bymm-show-more-btn {
+  padding: 0.75rem 2.5rem;
+  background: white;
+  color: #111;
+  border: 2px solid #111;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bymm-show-more-btn:hover {
+  background: #111;
+  color: white;
+}
 </style>
 
 <script>
@@ -473,6 +491,11 @@
   const SELECTED_MAKE  = params.get('make');
   const SELECTED_MODEL = params.get('model');
   const SELECTED_YEAR  = params.get('year');
+  const showMoreWrap = document.getElementById('bymm-show-more-wrap');
+  const remainingEl  = document.getElementById('bymm-remaining');
+
+  let currentPage = 1;
+  const PAGE_SIZE = 20;
 
   const HEADERS = {
     apikey: SUPABASE_ANON_KEY,
@@ -567,6 +590,7 @@
   }
 
   function applyFilters() {
+    currentPage = 1;
     let result = [...allProducts];
 
     if (activeVendors.size > 0) {
@@ -603,15 +627,28 @@
   }
 
   function renderGrid() {
-    countEl.textContent = filteredProducts.length + ' part(s) found';
-    if (filteredProducts.length === 0) {
-      gridEl.innerHTML = '';
-      emptyEl.style.display = 'block';
+  const total = filteredProducts.length;
+  const showing = Math.min(currentPage * PAGE_SIZE, total);
+  const visible = filteredProducts.slice(0, showing);
+
+  countEl.textContent = total + ' part(s) found';
+
+  if (total === 0) {
+    gridEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    showMoreWrap.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    gridEl.innerHTML = visible.map(buildCard).join('');
+    if (showing < total) {
+      const remaining = total - showing;
+      showMoreWrap.style.display = 'block';
+      remainingEl.textContent = '(' + remaining + ' more)';
     } else {
-      emptyEl.style.display = 'none';
-      gridEl.innerHTML = filteredProducts.map(buildCard).join('');
+      showMoreWrap.style.display = 'none';
     }
   }
+}
 
   function clearFilters() {
     activeVendors.clear();
@@ -651,6 +688,13 @@
     minPrice = document.getElementById('price-min').value ? parseFloat(document.getElementById('price-min').value) : null;
     maxPrice = document.getElementById('price-max').value ? parseFloat(document.getElementById('price-max').value) : null;
     applyFilters();
+  });
+  document.getElementById('bymm-show-more').addEventListener('click', () => {
+    currentPage++;
+    renderGrid();
+    const cards = gridEl.querySelectorAll('.bymm-card');
+    const firstNew = cards[(currentPage - 1) * PAGE_SIZE];
+    if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   async function init() {
