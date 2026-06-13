@@ -534,56 +534,8 @@
 </style>
 
 <script>
-const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
-
-const MAKE_TO_VIEW = {
-  'Aprilia':    'fitment_aprilia',
-  'Arctic Cat': 'fitment_arctic_cat',
-  'Beta':       'fitment_beta',
-  'BMW':        'fitment_bmw',
-  'Can-Am':     'fitment_can_am',
-  'CF-Moto':    'fitment_cf_moto',
-  'Dinli':      'fitment_dinli',
-  'Ducati':     'fitment_ducati',
-  'Gas-Gas':    'fitment_gas_gas',
-  'Harley':     'fitment_harley',
-  'Honda':      'fitment_honda',
-  'Husaberg':   'fitment_husaberg',
-  'Husqvarna':  'fitment_husqvarna',
-  'Jlo-cuyuna': 'fitment_jlo_cuyuna',
-  'Kawasaki':   'fitment_kawasaki',
-  'KAYO':       'fitment_kayo',
-  'Kohler':     'fitment_kohler',
-  'KTM':        'fitment_ktm',
-  'Kubota':     'fitment_kubota',
-  'Kymco':      'fitment_kymco',
-  'Lloyd':      'fitment_lloyd',
-  'Lynx':       'fitment_lynx',
-  'Maico':      'fitment_maico',
-  'Maxam':      'fitment_maxam',
-  'Montesa':    'fitment_montesa',
-  'Moto ski':   'fitment_moto_ski',
-  'Moto Ski':   'fitment_moto_ski',
-  'Moto_Guzzi': 'fitment_moto_guzzi',
-  'Odes':       'fitment_odes',
-  'Polaris':    'fitment_polaris',
-  'Redcat':     'fitment_redcat',
-  'Rieju':      'fitment_rieju',
-  'Rupp':       'fitment_rupp',
-  'Sachs':      'fitment_sachs',
-  'Sea-Doo':    'fitment_sea_doo',
-  'Segway':     'fitment_segway',
-  'Sherco':     'fitment_sherco',
-  'Ski-Doo':    'fitment_ski_doo',
-  'Stark':      'fitment_stark',
-  'Suzuki':     'fitment_suzuki',
-  'TM':         'fitment_tm',
-  'Triumph':    'fitment_triumph',
-  'Yamaha':     'fitment_yamaha'
-};
-
-  const SHOPIFY_DOMAIN = window.location.hostname;
+  const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
   const params = new URLSearchParams(window.location.search);
   const SELECTED_MAKE  = params.get('make');
@@ -592,7 +544,8 @@ const MAKE_TO_VIEW = {
 
   const HEADERS = {
     apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json'
   };
 
   // State
@@ -608,25 +561,25 @@ const MAKE_TO_VIEW = {
   let sortOrder = 'default';
 
   // DOM refs
-  const titleEl      = document.getElementById('bymm-title');
-  const loadingEl    = document.getElementById('bymm-loading');
-  const gridEl       = document.getElementById('bymm-grid');
-  const emptyEl      = document.getElementById('bymm-empty');
-  const countEl      = document.getElementById('bymm-count');
+  const titleEl       = document.getElementById('bymm-title');
+  const loadingEl     = document.getElementById('bymm-loading');
+  const gridEl        = document.getElementById('bymm-grid');
+  const emptyEl       = document.getElementById('bymm-empty');
+  const countEl       = document.getElementById('bymm-count');
   const collectionsEl = document.getElementById('bymm-collections');
-  const universalEl  = document.getElementById('bymm-universal');
-  const uniGridEl    = document.getElementById('bymm-universal-grid');
+  const universalEl   = document.getElementById('bymm-universal');
+  const uniGridEl     = document.getElementById('bymm-universal-grid');
 
-  // ── Build product card ──
+  // Build product card
   function buildCard(p) {
-    const img    = p.image_url || '';
-    const title  = p.product_title || 'Product';
-    const price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
-    const handle = p.product_handle || '';
+    const img    = p.featured_image || p.image?.src || '';
+    const title  = p.title || 'Product';
+    const price  = p.price_min ? 'R ' + (p.price_min / 100).toFixed(2) : '';
+    const handle = p.handle || '';
     const vendor = p.vendor || '';
-    const inStock = p.inventory_quantity === null || p.inventory_quantity > 0;
+    const inStock = p.available !== false;
 
-    return '<div class="bymm-card">' +
+    return '<div class="bymm-card" data-vendor="' + vendor + '" data-type="' + (p.type || '') + '" data-price="' + (p.price_min || 0) + '" data-instock="' + inStock + '" data-tags="' + (p.tags || []).join(',') + '">' +
       (img ? '<img class="bymm-card-img" src="' + img + '" alt="' + title + '" loading="lazy">'
            : '<div class="bymm-card-no-img"></div>') +
       '<div class="bymm-card-body">' +
@@ -641,28 +594,67 @@ const MAKE_TO_VIEW = {
       '</div></div>';
   }
 
-  // ── Fetch Shopify product details via Storefront-style URL ──
-  async function fetchShopifyProduct(handle) {
-    try {
-      const res = await fetch('/products/' + handle + '.js');
-      if (!res.ok) return null;
-      return await res.json();
-    } catch { return null; }
+  // Step 1 — Get product IDs from Supabase
+  async function getFitmentIds(make, model, year) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_fitment_product_ids`,
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({ p_make: make, p_model: model, p_year: year })
+      }
+    );
+    const data = await res.json();
+    return data.map(r => r.shopify_product_id).filter(Boolean);
   }
 
-  // ── Fetch collections from Shopify ──
+  // Get universal product IDs
+  async function getUniversalIds() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_universal_product_ids`,
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: '{}'
+      }
+    );
+    const data = await res.json();
+    return data.map(r => r.shopify_product_id).filter(Boolean);
+  }
+
+  // Step 2 — Get product details from Shopify
+  async function getShopifyProducts(ids) {
+    if (!ids || ids.length === 0) return [];
+    const results = [];
+    const batchSize = 50;
+
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      try {
+        const res = await fetch(
+          '/products.json?ids=' + batch.join(',') + '&limit=50'
+        );
+        const data = await res.json();
+        results.push(...(data.products || []));
+      } catch(e) {
+        console.error('Shopify fetch error:', e);
+      }
+    }
+    return results;
+  }
+
+  // Load collections
   async function loadCollections() {
     try {
-      const res = await fetch('/collections.js?limit=20');
+      const res = await fetch('/collections.json?limit=20');
       if (!res.ok) return;
       const data = await res.json();
-      const cols = data.collections || [];
-      cols.forEach(col => {
+      (data.collections || []).forEach(col => {
         const btn = document.createElement('button');
         btn.className = 'bymm-col-btn';
         btn.dataset.collection = col.handle;
         btn.textContent = col.title;
-        btn.addEventListener('click', () => selectCollection(col.handle));
+        btn.addEventListener('click', () => selectCollection(col.handle, col.id));
         collectionsEl.appendChild(btn);
       });
     } catch(e) {
@@ -670,95 +662,47 @@ const MAKE_TO_VIEW = {
     }
   }
 
-  function selectCollection(handle) {
+  async function selectCollection(handle, id) {
     activeCollection = handle;
     document.querySelectorAll('.bymm-col-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.collection === handle);
     });
-    applyFilters();
-  }
 
-  // ── Load fitment products from Supabase ──
-  async function loadFittedProducts() {
-  // Use brand-specific materialized view for faster queries
-  const view = MAKE_TO_VIEW[SELECTED_MAKE] || 'fitment';
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/${view}?model=eq.${encodeURIComponent(SELECTED_MODEL)}&year=eq.${encodeURIComponent(SELECTED_YEAR)}&is_universal=eq.false&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=500`,
-    { headers: HEADERS }
-  );
-  const data = await res.json();
-
-  // Deduplicate by shopify_product_id
-  const seen = new Set();
-  const products = [];
-  for (const row of data) {
-    const p = row.shopify_products;
-    if (!p || !p.shopify_product_id) continue;
-    if (seen.has(p.shopify_product_id)) continue;
-    seen.add(p.shopify_product_id);
-
-    // Enrich with Shopify data for vendor, type, tags, inventory
-    if (p.product_handle) {
-      const shopifyData = await fetchShopifyProduct(p.product_handle);
-      if (shopifyData) {
-        p.vendor = shopifyData.vendor || '';
-        p.product_type = shopifyData.type || '';
-        p.tags = shopifyData.tags || [];
-        p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
-        p.collections = shopifyData.collections || [];
-      }
+    if (handle === 'all') {
+      allProducts = window._allFittedProducts || [];
+      buildFilters(allProducts);
+      applyFilters();
+      return;
     }
-    products.push(p);
-  }
-  return products;
-}
 
-  // ── Load universal products ──
-  async function loadUniversalProducts() {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/fitment?make=eq.UNIVERSAL&select=sku,shopify_products(shopify_product_id,product_title,product_handle,price,image_url)&limit=200`,
-      { headers: HEADERS }
-    );
-    const data = await res.json();
-
-    const seen = new Set();
-    const products = [];
-    for (const row of data) {
-      const p = row.shopify_products;
-      if (!p || !p.shopify_product_id) continue;
-      if (seen.has(p.shopify_product_id)) continue;
-      seen.add(p.shopify_product_id);
-
-      if (p.product_handle) {
-        const shopifyData = await fetchShopifyProduct(p.product_handle);
-        if (shopifyData) {
-          p.vendor = shopifyData.vendor || '';
-          p.inventory_quantity = shopifyData.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) ?? null;
-        }
-      }
-      products.push(p);
+    // Filter by collection via Shopify
+    try {
+      const res = await fetch('/collections/' + handle + '/products.json?limit=250');
+      const data = await res.json();
+      const colHandles = new Set((data.products || []).map(p => p.handle));
+      allProducts = (window._allFittedProducts || []).filter(p => colHandles.has(p.handle));
+      buildFilters(allProducts);
+      applyFilters();
+    } catch(e) {
+      console.error('Collection filter error:', e);
     }
-    return products;
   }
 
-  // ── Build filter options ──
+  // Build filters
   function buildFilters(products) {
     const vendors = [...new Set(products.map(p => p.vendor).filter(Boolean))].sort();
-    const types   = [...new Set(products.map(p => p.product_type).filter(Boolean))].sort();
+    const types   = [...new Set(products.map(p => p.type).filter(Boolean))].sort();
     const tags    = [...new Set(products.flatMap(p => p.tags || []))].sort();
 
     renderCheckboxes('filter-vendor', vendors, activeVendors, v => {
       activeVendors.has(v) ? activeVendors.delete(v) : activeVendors.add(v);
       applyFilters();
     });
-
     renderCheckboxes('filter-type', types, activeTypes, v => {
       activeTypes.has(v) ? activeTypes.delete(v) : activeTypes.add(v);
       applyFilters();
     });
-
-    renderCheckboxes('filter-tags', tags, activeTags, v => {
+    renderCheckboxes('filter-tags', tags.slice(0, 30), activeTags, v => {
       activeTags.has(v) ? activeTags.delete(v) : activeTags.add(v);
       applyFilters();
     });
@@ -785,66 +729,44 @@ const MAKE_TO_VIEW = {
     });
   }
 
-  // ── Apply all filters ──
+  // Apply filters
   function applyFilters() {
     let result = [...allProducts];
 
-    // Collection filter
-    if (activeCollection !== 'all') {
-      result = result.filter(p =>
-        (p.collections || []).some(c => c.handle === activeCollection)
-      );
-    }
-
-    // Vendor filter
     if (activeVendors.size > 0) {
       result = result.filter(p => activeVendors.has(p.vendor));
     }
-
-    // Type filter
     if (activeTypes.size > 0) {
-      result = result.filter(p => activeTypes.has(p.product_type));
+      result = result.filter(p => activeTypes.has(p.type));
     }
-
-    // Tags filter
     if (activeTags.size > 0) {
-      result = result.filter(p =>
-        (p.tags || []).some(t => activeTags.has(t))
-      );
+      result = result.filter(p => (p.tags || []).some(t => activeTags.has(t)));
     }
-
-    // Price filter
     if (minPrice !== null) {
-      result = result.filter(p => parseFloat(p.price || 0) >= minPrice);
+      result = result.filter(p => (p.price_min / 100) >= minPrice);
     }
     if (maxPrice !== null) {
-      result = result.filter(p => parseFloat(p.price || 0) <= maxPrice);
+      result = result.filter(p => (p.price_min / 100) <= maxPrice);
     }
-
-    // In stock filter
     if (inStockOnly) {
-      result = result.filter(p => p.inventory_quantity === null || p.inventory_quantity > 0);
+      result = result.filter(p => p.available !== false);
     }
-
-    // Sort
     if (sortOrder === 'price-asc') {
-      result.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+      result.sort((a, b) => a.price_min - b.price_min);
     } else if (sortOrder === 'price-desc') {
-      result.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+      result.sort((a, b) => b.price_min - a.price_min);
     } else if (sortOrder === 'title-asc') {
-      result.sort((a, b) => (a.product_title || '').localeCompare(b.product_title || ''));
+      result.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortOrder === 'title-desc') {
-      result.sort((a, b) => (b.product_title || '').localeCompare(a.product_title || ''));
+      result.sort((a, b) => b.title.localeCompare(a.title));
     }
 
     filteredProducts = result;
     renderGrid();
   }
 
-  // ── Render grid ──
   function renderGrid() {
     countEl.textContent = filteredProducts.length + ' part(s) found';
-
     if (filteredProducts.length === 0) {
       gridEl.style.display = 'none';
       emptyEl.style.display = 'block';
@@ -855,87 +777,4 @@ const MAKE_TO_VIEW = {
     }
   }
 
-  // ── Clear all filters ──
-  function clearFilters() {
-    activeVendors.clear();
-    activeTypes.clear();
-    activeTags.clear();
-    minPrice = null;
-    maxPrice = null;
-    inStockOnly = false;
-    activeCollection = 'all';
-    document.getElementById('price-min').value = '';
-    document.getElementById('price-max').value = '';
-    document.getElementById('filter-instock').checked = false;
-    document.querySelectorAll('.bymm-col-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.collection === 'all');
-    });
-    document.querySelectorAll('.bymm-filter-check input').forEach(cb => cb.checked = false);
-    applyFilters();
-  }
-
-  // ── Filter accordion ──
-  document.querySelectorAll('.bymm-filter-title').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const body = document.getElementById(btn.dataset.target);
-      const isOpen = body.classList.contains('open');
-      body.classList.toggle('open', !isOpen);
-      btn.classList.toggle('open', !isOpen);
-    });
-    // Open by default
-    const body = document.getElementById(btn.dataset.target);
-    if (body) { body.classList.add('open'); btn.classList.add('open'); }
-  });
-
-  // ── Event listeners ──
-  document.getElementById('bymm-clear').addEventListener('click', clearFilters);
-  document.getElementById('bymm-clear-2').addEventListener('click', clearFilters);
-  document.getElementById('filter-instock').addEventListener('change', e => {
-    inStockOnly = e.target.checked;
-    applyFilters();
-  });
-  document.getElementById('bymm-sort').addEventListener('change', e => {
-    sortOrder = e.target.value;
-    applyFilters();
-  });
-  document.getElementById('bymm-apply-price').addEventListener('click', () => {
-    const minVal = document.getElementById('price-min').value;
-    const maxVal = document.getElementById('price-max').value;
-    minPrice = minVal ? parseFloat(minVal) : null;
-    maxPrice = maxVal ? parseFloat(maxVal) : null;
-    applyFilters();
-  });
-
-  // ── Main init ──
-  async function init() {
-    if (!SELECTED_MAKE || !SELECTED_MODEL || !SELECTED_YEAR) {
-      loadingEl.style.display = 'none';
-      emptyEl.style.display = 'block';
-      return;
-    }
-
-    titleEl.textContent = SELECTED_YEAR + ' ' + SELECTED_MAKE + ' ' + SELECTED_MODEL;
-
-    await loadCollections();
-
-    const [fitted, universal] = await Promise.all([
-      loadFittedProducts(),
-      loadUniversalProducts()
-    ]);
-
-    allProducts = fitted;
-    loadingEl.style.display = 'none';
-    gridEl.style.display = 'grid';
-
-    buildFilters(allProducts);
-    applyFilters();
-
-    // Render universal section
-    if (universal.length > 0) {
-      universalEl.style.display = 'block';
-      uniGridEl.innerHTML = universal.map(buildCard).join('');
-    }
-  }
-
-  init();
-</script>
+  function clearFilters()
