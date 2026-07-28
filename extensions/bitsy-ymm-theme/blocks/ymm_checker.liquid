@@ -21,7 +21,6 @@
 
 <div class="bymm-wrap">
 
-  <!-- Header -->
   <div class="bymm-header">
     <div class="bymm-header-left">
       <span class="bymm-label">Results for</span>
@@ -30,16 +29,13 @@
     <a href="/" class="bymm-change">Change vehicle</a>
   </div>
 
-  <!-- Loading -->
   <div id="bymm-loading" class="bymm-loading">
     <div class="bymm-spinner"></div>
     <p>Finding parts for your vehicle...</p>
   </div>
 
-  <!-- Main Layout -->
   <div class="bymm-layout" id="bymm-layout" style="display:none;">
 
-    <!-- Filters Sidebar -->
     <aside class="bymm-filters">
       <div class="bymm-filter-header">
         <span>Filters</span>
@@ -92,7 +88,6 @@
       </div>
     </aside>
 
-    <!-- Product Area -->
     <div class="bymm-product-area">
       <div class="bymm-sort-bar">
         <span class="bymm-count" id="bymm-count"></span>
@@ -100,4 +95,663 @@
           <option value="default">Sort: Featured</option>
           <option value="price-asc">Price: Low to High</option>
           <option value="price-desc">Price: High to Low</option>
-          <option value="title-asc">Name: A–Z
+          <option value="title-asc">Name: A-Z</option>
+          <option value="title-desc">Name: Z-A</option>
+        </select>
+      </div>
+
+      <div id="bymm-grid" class="bymm-grid"></div>
+
+      <div id="bymm-empty" class="bymm-empty" style="display:none;">
+        <p>No parts found with the current filters.</p>
+        <button class="bymm-back-btn" id="bymm-clear-2">Clear filters</button>
+      </div>
+
+      <div id="bymm-show-more-wrap" style="display:none; text-align:center; margin-top:1.5rem;">
+        <button id="bymm-show-more" class="bymm-show-more-btn">
+          Show More <span id="bymm-remaining"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bymm-no-results" class="bymm-empty" style="display:none;">
+    <p>No parts found for your vehicle.</p>
+    <a href="/" class="bymm-back-btn">Search Again</a>
+  </div>
+
+  <div class="bymm-universal" id="bymm-universal" style="display:none;">
+    <div class="bymm-universal-header">
+      <h2 class="bymm-universal-title">Universal Fit Parts</h2>
+      <p class="bymm-universal-sub">These parts are compatible with all vehicles</p>
+    </div>
+    <div id="bymm-universal-grid" class="bymm-grid"></div>
+  </div>
+
+</div>
+
+<style>
+  .bymm-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+    font-family: inherit;
+  }
+  .bymm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #111;
+    margin-bottom: 1.5rem;
+  }
+  .bymm-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #999;
+    margin-bottom: 0.2rem;
+  }
+  .bymm-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  .bymm-change {
+    font-size: 0.85rem;
+    color: {{ block.settings.accent_color }};
+    text-decoration: underline;
+    white-space: nowrap;
+    margin-left: 1rem;
+  }
+  .bymm-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+  }
+  .bymm-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #eee;
+    border-top-color: #111;
+    border-radius: 50%;
+    animation: bymm-spin 0.7s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes bymm-spin { to { transform: rotate(360deg); } }
+  .bymm-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  .bymm-filters {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1rem;
+    position: sticky;
+    top: 1rem;
+  }
+  .bymm-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .bymm-clear-btn {
+    font-size: 0.78rem;
+    color: {{ block.settings.accent_color }};
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .bymm-filter-group {
+    border-top: 1px solid #f0f0f0;
+    padding: 0.65rem 0;
+  }
+  .bymm-filter-title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+  }
+  .bymm-chevron {
+    font-size: 0.65rem;
+    transition: transform 0.2s;
+  }
+  .bymm-filter-title.open .bymm-chevron {
+    transform: rotate(180deg);
+  }
+  .bymm-filter-body {
+    margin-top: 0.6rem;
+    display: none;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .bymm-filter-body.open {
+    display: flex;
+  }
+  .bymm-filter-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .bymm-filter-check input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #111;
+  }
+  .bymm-price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .bymm-price-input {
+    width: 70px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .bymm-apply-price {
+    width: 100%;
+    padding: 0.4rem;
+    background: #111;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .bymm-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .bymm-toggle-input { display: none; }
+  .bymm-toggle-track {
+    width: 36px;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .bymm-toggle-input:checked + .bymm-toggle-track { background: #111; }
+  .bymm-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb {
+    transform: translateX(16px);
+  }
+  .bymm-sort-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  .bymm-count { font-size: 0.85rem; color: #666; }
+  .bymm-sort-select {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: white;
+    cursor: pointer;
+  }
+  .bymm-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .bymm-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    background: white;
+  }
+  .bymm-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.09);
+    transform: translateY(-2px);
+  }
+  .bymm-card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #f7f7f7;
+    display: block;
+  }
+  .bymm-card-no-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #f7f7f7;
+  }
+  .bymm-card-body { padding: 0.75rem; }
+  .bymm-card-vendor {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #999;
+    margin-bottom: 0.2rem;
+  }
+  .bymm-card-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+  }
+  .bymm-card-price {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.65rem;
+  }
+  .bymm-card-btn {
+    display: block;
+    width: 100%;
+    padding: 0.55rem;
+    text-align: center;
+    color: white;
+    background: {{ block.settings.button_color }};
+    border: none;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .bymm-card-btn:hover { opacity: 0.85; }
+  .bymm-card-oos {
+    display: block;
+    width: 100%;
+    padding: 0.55rem;
+    text-align: center;
+    color: #999;
+    background: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    font-size: 0.82rem;
+  }
+  .bymm-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #999;
+  }
+  .bymm-back-btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.65rem 1.5rem;
+    background: #111;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+  }
+  .bymm-show-more-btn {
+    padding: 0.75rem 2.5rem;
+    background: white;
+    color: #111;
+    border: 2px solid #111;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bymm-show-more-btn:hover {
+    background: #111;
+    color: white;
+  }
+  .bymm-universal {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f0f0f0;
+  }
+  .bymm-universal-header { margin-bottom: 1.5rem; }
+  .bymm-universal-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0 0 0.3rem;
+  }
+  .bymm-universal-sub {
+    font-size: 0.85rem;
+    color: #999;
+    margin: 0;
+  }
+  @media (max-width: 768px) {
+    .bymm-layout { grid-template-columns: 1fr; }
+    .bymm-filters { position: static; }
+    .bymm-grid { grid-template-columns: repeat(2, 1fr); }
+    .bymm-title { font-size: 1.2rem; }
+  }
+</style>
+
+<script>
+  const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+
+  const params = new URLSearchParams(window.location.search);
+  const SELECTED_MAKE  = params.get('make');
+  const SELECTED_MODEL = params.get('model');
+  const SELECTED_YEAR  = params.get('year');
+
+  const HEADERS = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    'Content-Type': 'application/json'
+  };
+
+  let allProducts = [];
+  let filteredProducts = [];
+  let activeVendors = new Set();
+  let activeTypes = new Set();
+  let activeTags = new Set();
+  let minPrice = null;
+  let maxPrice = null;
+  let inStockOnly = false;
+  let sortOrder = 'default';
+  let currentPage = 1;
+  const PAGE_SIZE = 20;
+
+  const titleEl      = document.getElementById('bymm-title');
+  const loadingEl    = document.getElementById('bymm-loading');
+  const layoutEl     = document.getElementById('bymm-layout');
+  const gridEl       = document.getElementById('bymm-grid');
+  const emptyEl      = document.getElementById('bymm-empty');
+  const noResultsEl  = document.getElementById('bymm-no-results');
+  const countEl      = document.getElementById('bymm-count');
+  const universalEl  = document.getElementById('bymm-universal');
+  const uniGridEl    = document.getElementById('bymm-universal-grid');
+  const showMoreWrap = document.getElementById('bymm-show-more-wrap');
+  const remainingEl  = document.getElementById('bymm-remaining');
+
+  function buildCard(p) {
+    const img    = p.image_url || '';
+    const title  = p.product_title || 'Product';
+    const price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
+    const handle = p.product_handle || '';
+    const vendor = p.vendor || '';
+    const inStock = p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0;
+
+    return '<div class="bymm-card">' +
+      (img
+        ? '<img class="bymm-card-img" src="' + img + '" alt="' + title + '" loading="lazy">'
+        : '<div class="bymm-card-no-img"></div>') +
+      '<div class="bymm-card-body">' +
+        (vendor ? '<p class="bymm-card-vendor">' + vendor + '</p>' : '') +
+        '<p class="bymm-card-title">' + title + '</p>' +
+        (price ? '<p class="bymm-card-price">' + price + '</p>' : '') +
+        (handle
+          ? (inStock
+              ? '<a href="/products/' + handle + '" class="bymm-card-btn">View Product</a>'
+              : '<span class="bymm-card-oos">Out of stock</span>')
+          : '') +
+      '</div></div>';
+  }
+
+  function buildFilters(products) {
+    const vendors = [...new Set(products.map(p => p.vendor).filter(Boolean))].sort();
+    const types   = [...new Set(products.map(p => p.product_type).filter(Boolean))].sort();
+    const tags    = [...new Set(products.flatMap(p =>
+      p.tags ? p.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+    ))].sort();
+
+    renderCheckboxes('filter-vendor', vendors, activeVendors, v => {
+      activeVendors.has(v) ? activeVendors.delete(v) : activeVendors.add(v);
+      currentPage = 1;
+      applyFilters();
+    });
+    renderCheckboxes('filter-type', types, activeTypes, v => {
+      activeTypes.has(v) ? activeTypes.delete(v) : activeTypes.add(v);
+      currentPage = 1;
+      applyFilters();
+    });
+    renderCheckboxes('filter-tags', tags.slice(0, 30), activeTags, v => {
+      activeTags.has(v) ? activeTags.delete(v) : activeTags.add(v);
+      currentPage = 1;
+      applyFilters();
+    });
+  }
+
+  function renderCheckboxes(containerId, values, activeSet, onChange) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    if (values.length === 0) {
+      container.innerHTML = '<span style="font-size:0.78rem;color:#bbb">None available</span>';
+      return;
+    }
+    values.forEach(val => {
+      const label = document.createElement('label');
+      label.className = 'bymm-filter-check';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = activeSet.has(val);
+      cb.addEventListener('change', () => onChange(val));
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(val));
+      container.appendChild(label);
+    });
+  }
+
+  function applyFilters() {
+    let result = [...allProducts];
+
+    if (activeVendors.size > 0) {
+      result = result.filter(p => activeVendors.has(p.vendor));
+    }
+    if (activeTypes.size > 0) {
+      result = result.filter(p => activeTypes.has(p.product_type));
+    }
+    if (activeTags.size > 0) {
+      const getTags = p => p.tags ? p.tags.split(',').map(t => t.trim()) : [];
+      result = result.filter(p => getTags(p).some(t => activeTags.has(t)));
+    }
+    if (minPrice !== null) {
+      result = result.filter(p => parseFloat(p.price || 0) >= minPrice);
+    }
+    if (maxPrice !== null) {
+      result = result.filter(p => parseFloat(p.price || 0) <= maxPrice);
+    }
+    if (inStockOnly) {
+      result = result.filter(p => p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0);
+    }
+    if (sortOrder === 'price-asc') {
+      result.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+    } else if (sortOrder === 'price-desc') {
+      result.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+    } else if (sortOrder === 'title-asc') {
+      result.sort((a, b) => (a.product_title || '').localeCompare(b.product_title || ''));
+    } else if (sortOrder === 'title-desc') {
+      result.sort((a, b) => (b.product_title || '').localeCompare(a.product_title || ''));
+    }
+
+    filteredProducts = result;
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const total   = filteredProducts.length;
+    const showing = Math.min(currentPage * PAGE_SIZE, total);
+    const visible = filteredProducts.slice(0, showing);
+
+    countEl.textContent = total + ' part(s) found';
+
+    if (total === 0) {
+      gridEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      showMoreWrap.style.display = 'none';
+    } else {
+      emptyEl.style.display = 'none';
+      gridEl.innerHTML = visible.map(buildCard).join('');
+      if (showing < total) {
+        const remaining = total - showing;
+        showMoreWrap.style.display = 'block';
+        remainingEl.textContent = '(' + remaining + ' more)';
+      } else {
+        showMoreWrap.style.display = 'none';
+      }
+    }
+  }
+
+  function clearFilters() {
+    activeVendors.clear();
+    activeTypes.clear();
+    activeTags.clear();
+    minPrice = null;
+    maxPrice = null;
+    inStockOnly = false;
+    currentPage = 1;
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    document.getElementById('filter-instock').checked = false;
+    document.querySelectorAll('.bymm-filter-check input').forEach(cb => cb.checked = false);
+    applyFilters();
+  }
+
+  document.querySelectorAll('.bymm-filter-title').forEach(btn => {
+    const body = document.getElementById(btn.dataset.target);
+    if (body) { body.classList.add('open'); btn.classList.add('open'); }
+    btn.addEventListener('click', () => {
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      btn.classList.toggle('open', !isOpen);
+    });
+  });
+
+  document.getElementById('bymm-clear').addEventListener('click', clearFilters);
+  document.getElementById('bymm-clear-2').addEventListener('click', clearFilters);
+  document.getElementById('filter-instock').addEventListener('change', e => {
+    inStockOnly = e.target.checked;
+    currentPage = 1;
+    applyFilters();
+  });
+  document.getElementById('bymm-sort').addEventListener('change', e => {
+    sortOrder = e.target.value;
+    currentPage = 1;
+    applyFilters();
+  });
+  document.getElementById('bymm-apply-price').addEventListener('click', () => {
+    minPrice = document.getElementById('price-min').value ? parseFloat(document.getElementById('price-min').value) : null;
+    maxPrice = document.getElementById('price-max').value ? parseFloat(document.getElementById('price-max').value) : null;
+    currentPage = 1;
+    applyFilters();
+  });
+  document.getElementById('bymm-show-more').addEventListener('click', () => {
+    currentPage++;
+    renderGrid();
+    const cards = gridEl.querySelectorAll('.bymm-card');
+    const firstNew = cards[(currentPage - 1) * PAGE_SIZE];
+    if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  async function loadFittedProducts() {
+    console.log('Calling RPC with:', SELECTED_MAKE, SELECTED_MODEL, SELECTED_YEAR);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_fitment_products`,
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({
+          p_make: SELECTED_MAKE,
+          p_model: SELECTED_MODEL,
+          p_year: SELECTED_YEAR
+        })
+      }
+    );
+    const data = await res.json();
+    console.log('RPC returned:', data.length, 'products');
+    return data || [];
+  }
+
+  async function loadUniversalProducts() {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/get_universal_products`,
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: '{}'
+      }
+    );
+    const data = await res.json();
+    return data || [];
+  }
+
+  async function init() {
+    if (!SELECTED_MAKE || !SELECTED_MODEL || !SELECTED_YEAR) {
+      loadingEl.style.display = 'none';
+      noResultsEl.style.display = 'block';
+      return;
+    }
+
+    titleEl.textContent = SELECTED_YEAR + ' ' + SELECTED_MAKE + ' ' + SELECTED_MODEL;
+
+    try {
+      const [fittedData, universalData] = await Promise.all([
+        loadFittedProducts(),
+        loadUniversalProducts()
+      ]);
+
+      loadingEl.style.display = 'none';
+
+      if (!fittedData || fittedData.length === 0) {
+        noResultsEl.style.display = 'block';
+      } else {
+        layoutEl.style.display = 'grid';
+        allProducts = fittedData;
+        buildFilters(allProducts);
+        applyFilters();
+      }
+
+      if (universalData && universalData.length > 0) {
+        universalEl.style.display = 'block';
+        uniGridEl.innerHTML = universalData.map(buildCard).join('');
+      }
+
+    } catch (err) {
+      loadingEl.textContent = 'Failed to load results. Please try again.';
+      console.error(err);
+    }
+  }
+
+  init();
+</script>
