@@ -708,7 +708,7 @@
 
     try {
       const [fitRes, uniRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/rpc/get_fitment_products`, {
+        fetch(SUPABASE_URL + '/rest/v1/rpc/get_fitment_products', {
           method: 'POST',
           headers: HEADERS,
           body: JSON.stringify({
@@ -717,7 +717,7 @@
             p_year: SELECTED_YEAR
           })
         }),
-        fetch(`${SUPABASE_URL}/rest/v1/rpc/get_universal_products`, {
+        fetch(SUPABASE_URL + '/rest/v1/rpc/get_universal_products', {
           method: 'POST',
           headers: HEADERS,
           body: '{}'
