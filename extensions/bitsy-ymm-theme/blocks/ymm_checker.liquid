@@ -238,7 +238,7 @@
     checkerResult.style.display = 'none';
   });
 
-  checkerBtn.addEventListener('click', async () => {
+checkerBtn.addEventListener('click', async () => {
     const make = checkerMake.value;
     const model = checkerModel.value;
     const year = checkerYear.value;
@@ -248,10 +248,23 @@
 
     try {
       const res = await fetch(
-        `${CHECKER_SUPABASE_URL}/rest/v1/fitment?sku=eq.${encodeURIComponent(CHECKER_PRODUCT_SKU)}&make=eq.${encodeURIComponent(make)}&model=eq.${encodeURIComponent(model)}&year=eq.${encodeURIComponent(year)}&select=id&limit=1`,
-        { headers: CHECKER_HEADERS }
+        `${CHECKER_SUPABASE_URL}/rest/v1/rpc/check_fitment`,
+        {
+          method: 'POST',
+          headers: {
+            ...CHECKER_HEADERS,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            p_sku: CHECKER_PRODUCT_SKU,
+            p_make: make,
+            p_model: model,
+            p_year: year
+          })
+        }
       );
-      const data = await res.json();
+      const fits = await res.json();
+      const data = fits ? [1] : [];
 
       checkerResult.style.display = 'block';
       if (data.length > 0) {
