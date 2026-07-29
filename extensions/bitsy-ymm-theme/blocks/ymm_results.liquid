@@ -731,8 +731,9 @@ console.log('SELECTED_YEAR:', SELECTED_YEAR);
         body: '{}'
       }
     );
-    var data = await res.json();
-    return data || [];
+var data = await res.json();
+console.log('Full RPC response:', JSON.stringify(data));
+return data || [];
   }
 
   async function init() {
