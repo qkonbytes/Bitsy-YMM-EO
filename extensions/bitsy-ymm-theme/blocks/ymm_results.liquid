@@ -714,20 +714,22 @@
       }
     );
     var ids = await res.json();
+    console.log('IDs from RPC:', ids ? ids.length : 0);
     if (!ids || ids.length === 0) return [];
 
     var products = [];
-    var chunkSize = 50;
+    var chunkSize = 10;
     for (var i = 0; i < ids.length; i += chunkSize) {
       var chunk = ids.slice(i, i + chunkSize);
       var idFilter = chunk.map(function(id) { return 'shopify_product_id.eq.' + id; }).join(',');
-      var r = await fetch(
-        SUPABASE_URL + '/rest/v1/shopify_products?or=(' + idFilter + ')&select=shopify_product_id,product_title,product_handle,price,image_url,vendor,product_type,tags,inventory_quantity',
-        { headers: HEADERS }
-      );
+      var url = SUPABASE_URL + '/rest/v1/shopify_products?or=(' + idFilter + ')&select=shopify_product_id,product_title,product_handle,price,image_url,vendor,product_type,tags,inventory_quantity';
+      console.log('Fetching chunk', Math.floor(i/chunkSize) + 1, 'URL:', url);
+      var r = await fetch(url, { headers: HEADERS });
       var data = await r.json();
+      console.log('Chunk', Math.floor(i/chunkSize) + 1, 'returned:', data ? data.length : 0, 'products');
       products = products.concat(data || []);
     }
+    console.log('Total products fetched:', products.length);
     return products;
   }
 
