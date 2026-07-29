@@ -21,7 +21,6 @@
 
 <div class="bymm-wrap">
 
-  <!-- Header -->
   <div class="bymm-header">
     <div class="bymm-header-left">
       <span class="bymm-label">Results for</span>
@@ -30,23 +29,19 @@
     <a href="/" class="bymm-change">Change vehicle</a>
   </div>
 
-  <!-- Loading -->
   <div id="bymm-loading" class="bymm-loading">
     <div class="bymm-spinner"></div>
     <p>Finding parts for your vehicle...</p>
   </div>
 
-  <!-- Main Layout -->
   <div class="bymm-layout" id="bymm-layout" style="display:none;">
 
-    <!-- Filters Sidebar -->
     <aside class="bymm-filters">
       <div class="bymm-filter-header">
         <span>Filters</span>
         <button class="bymm-clear-btn" id="bymm-clear">Clear all</button>
       </div>
 
-      <!-- Vendor -->
       <div class="bymm-filter-group">
         <button class="bymm-filter-title open" data-target="filter-vendor">
           Vendor <span class="bymm-chevron">&#9660;</span>
@@ -54,7 +49,6 @@
         <div class="bymm-filter-body open" id="filter-vendor"></div>
       </div>
 
-      <!-- Product Type -->
       <div class="bymm-filter-group">
         <button class="bymm-filter-title open" data-target="filter-type">
           Product Type <span class="bymm-chevron">&#9660;</span>
@@ -62,7 +56,6 @@
         <div class="bymm-filter-body open" id="filter-type"></div>
       </div>
 
-      <!-- Price -->
       <div class="bymm-filter-group">
         <button class="bymm-filter-title open" data-target="filter-price">
           Price <span class="bymm-chevron">&#9660;</span>
@@ -77,7 +70,6 @@
         </div>
       </div>
 
-      <!-- In Stock -->
       <div class="bymm-filter-group">
         <label class="bymm-toggle-label">
           <input type="checkbox" id="filter-instock" class="bymm-toggle-input">
@@ -88,7 +80,6 @@
         </label>
       </div>
 
-      <!-- Tags -->
       <div class="bymm-filter-group">
         <button class="bymm-filter-title open" data-target="filter-tags">
           Tags <span class="bymm-chevron">&#9660;</span>
@@ -97,7 +88,6 @@
       </div>
     </aside>
 
-<!-- Product Area -->
     <div class="bymm-product-area">
       <div class="bymm-sort-bar">
         <span class="bymm-count" id="bymm-count"></span>
@@ -105,15 +95,18 @@
           <option value="default">Sort: Featured</option>
           <option value="price-asc">Price: Low to High</option>
           <option value="price-desc">Price: High to Low</option>
-          <option value="title-asc">Name: A–Z</option>
-          <option value="title-desc">Name: Z–A</option>
+          <option value="title-asc">Name: A-Z</option>
+          <option value="title-desc">Name: Z-A</option>
         </select>
       </div>
+
       <div id="bymm-grid" class="bymm-grid"></div>
+
       <div id="bymm-empty" class="bymm-empty" style="display:none;">
         <p>No parts found with the current filters.</p>
         <button class="bymm-back-btn" id="bymm-clear-2">Clear filters</button>
       </div>
+
       <div id="bymm-show-more-wrap" style="display:none; text-align:center; margin-top:1.5rem;">
         <button id="bymm-show-more" class="bymm-show-more-btn">
           Show More <span id="bymm-remaining"></span>
@@ -122,13 +115,11 @@
     </div>
   </div>
 
-  <!-- Empty State (no results at all) -->
   <div id="bymm-no-results" class="bymm-empty" style="display:none;">
     <p>No parts found for your vehicle.</p>
     <a href="/" class="bymm-back-btn">Search Again</a>
   </div>
 
-  <!-- Universal Products -->
   <div class="bymm-universal" id="bymm-universal" style="display:none;">
     <div class="bymm-universal-header">
       <h2 class="bymm-universal-title">Universal Fit Parts</h2>
@@ -189,16 +180,12 @@
     margin: 0 auto 1rem;
   }
   @keyframes bymm-spin { to { transform: rotate(360deg); } }
-
-  /* Layout */
   .bymm-layout {
     display: grid;
     grid-template-columns: 220px 1fr;
     gap: 2rem;
     align-items: start;
   }
-
-  /* Filters */
   .bymm-filters {
     border: 1px solid #e5e5e5;
     border-radius: 8px;
@@ -312,9 +299,7 @@
     transition: background 0.2s;
     flex-shrink: 0;
   }
-  .bymm-toggle-input:checked + .bymm-toggle-track {
-    background: #111;
-  }
+  .bymm-toggle-input:checked + .bymm-toggle-track { background: #111; }
   .bymm-toggle-thumb {
     position: absolute;
     top: 2px;
@@ -328,8 +313,6 @@
   .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb {
     transform: translateX(16px);
   }
-
-  /* Sort bar */
   .bymm-sort-bar {
     display: flex;
     justify-content: space-between;
@@ -345,8 +328,6 @@
     background: white;
     cursor: pointer;
   }
-
-  /* Grid */
   .bymm-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -444,6 +425,21 @@
     border: none;
     cursor: pointer;
   }
+  .bymm-show-more-btn {
+    padding: 0.75rem 2.5rem;
+    background: white;
+    color: #111;
+    border: 2px solid #111;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bymm-show-more-btn:hover {
+    background: #111;
+    color: white;
+  }
   .bymm-universal {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -466,71 +462,54 @@
     .bymm-grid { grid-template-columns: repeat(2, 1fr); }
     .bymm-title { font-size: 1.2rem; }
   }
-.bymm-show-more-btn {
-  padding: 0.75rem 2.5rem;
-  background: white;
-  color: #111;
-  border: 2px solid #111;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.bymm-show-more-btn:hover {
-  background: #111;
-  color: white;
-}
 </style>
 
 <script>
-{% raw %}
-  const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+  var SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
-  const params = new URLSearchParams(window.location.search);
-  const SELECTED_MAKE  = params.get('make');
-  const SELECTED_MODEL = params.get('model');
-  const SELECTED_YEAR  = params.get('year');
-  const showMoreWrap = document.getElementById('bymm-show-more-wrap');
-  const remainingEl  = document.getElementById('bymm-remaining');
+  var urlParams = new URLSearchParams(window.location.search);
+  var SELECTED_MAKE  = urlParams.get('make') || '';
+  var SELECTED_MODEL = urlParams.get('model') || '';
+  var SELECTED_YEAR  = urlParams.get('year') || '';
 
-  let currentPage = 1;
-  const PAGE_SIZE = 20;
-
-  const HEADERS = {
+  var HEADERS = {
     apikey: SUPABASE_ANON_KEY,
     Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
     'Content-Type': 'application/json'
   };
 
-  let allProducts = [];
-  let filteredProducts = [];
-  let activeVendors = new Set();
-  let activeTypes = new Set();
-  let activeTags = new Set();
-  let minPrice = null;
-  let maxPrice = null;
-  let inStockOnly = false;
-  let sortOrder = 'default';
+  var allProducts = [];
+  var filteredProducts = [];
+  var activeVendors = new Set();
+  var activeTypes = new Set();
+  var activeTags = new Set();
+  var minPrice = null;
+  var maxPrice = null;
+  var inStockOnly = false;
+  var sortOrder = 'default';
+  var currentPage = 1;
+  var PAGE_SIZE = 20;
 
-  const titleEl    = document.getElementById('bymm-title');
-  const loadingEl  = document.getElementById('bymm-loading');
-  const layoutEl   = document.getElementById('bymm-layout');
-  const gridEl     = document.getElementById('bymm-grid');
-  const emptyEl    = document.getElementById('bymm-empty');
-  const noResultsEl = document.getElementById('bymm-no-results');
-  const countEl    = document.getElementById('bymm-count');
-  const universalEl = document.getElementById('bymm-universal');
-  const uniGridEl  = document.getElementById('bymm-universal-grid');
+  var titleEl      = document.getElementById('bymm-title');
+  var loadingEl    = document.getElementById('bymm-loading');
+  var layoutEl     = document.getElementById('bymm-layout');
+  var gridEl       = document.getElementById('bymm-grid');
+  var emptyEl      = document.getElementById('bymm-empty');
+  var noResultsEl  = document.getElementById('bymm-no-results');
+  var countEl      = document.getElementById('bymm-count');
+  var universalEl  = document.getElementById('bymm-universal');
+  var uniGridEl    = document.getElementById('bymm-universal-grid');
+  var showMoreWrap = document.getElementById('bymm-show-more-wrap');
+  var remainingEl  = document.getElementById('bymm-remaining');
 
   function buildCard(p) {
-    const img    = p.image_url || '';
-    const title  = p.product_title || 'Product';
-    const price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
-    const handle = p.product_handle || '';
-    const vendor = p.vendor || '';
-    const inStock = p.inventory_quantity === null || p.inventory_quantity > 0;
+    var img    = p.image_url || '';
+    var title  = p.product_title || 'Product';
+    var price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
+    var handle = p.product_handle || '';
+    var vendor = p.vendor || '';
+    var inStock = p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0;
 
     return '<div class="bymm-card">' +
       (img
@@ -549,41 +528,60 @@
   }
 
   function buildFilters(products) {
-    const vendors = [...new Set(products.map(p => p.vendor).filter(Boolean))].sort();
-    const types   = [...new Set(products.map(p => p.product_type).filter(Boolean))].sort();
-    const tags    = [...new Set(products.flatMap(p =>
-      p.tags ? p.tags.split(',').map(t => t.trim()).filter(Boolean) : []
-    ))].sort();
+    var vendors = [];
+    var types = [];
+    var tags = [];
+    var vendorSet = {};
+    var typeSet = {};
+    var tagSet = {};
 
-    renderCheckboxes('filter-vendor', vendors, activeVendors, v => {
-      activeVendors.has(v) ? activeVendors.delete(v) : activeVendors.add(v);
+    products.forEach(function(p) {
+      if (p.vendor && !vendorSet[p.vendor]) { vendorSet[p.vendor] = true; vendors.push(p.vendor); }
+      if (p.product_type && !typeSet[p.product_type]) { typeSet[p.product_type] = true; types.push(p.product_type); }
+      if (p.tags) {
+        p.tags.split(',').forEach(function(t) {
+          t = t.trim();
+          if (t && !tagSet[t]) { tagSet[t] = true; tags.push(t); }
+        });
+      }
+    });
+
+    vendors.sort();
+    types.sort();
+    tags.sort();
+
+    renderCheckboxes('filter-vendor', vendors, activeVendors, function(v) {
+      if (activeVendors.has(v)) { activeVendors.delete(v); } else { activeVendors.add(v); }
+      currentPage = 1;
       applyFilters();
     });
-    renderCheckboxes('filter-type', types, activeTypes, v => {
-      activeTypes.has(v) ? activeTypes.delete(v) : activeTypes.add(v);
+    renderCheckboxes('filter-type', types, activeTypes, function(v) {
+      if (activeTypes.has(v)) { activeTypes.delete(v); } else { activeTypes.add(v); }
+      currentPage = 1;
       applyFilters();
     });
-    renderCheckboxes('filter-tags', tags.slice(0, 30), activeTags, v => {
-      activeTags.has(v) ? activeTags.delete(v) : activeTags.add(v);
+    renderCheckboxes('filter-tags', tags.slice(0, 30), activeTags, function(v) {
+      if (activeTags.has(v)) { activeTags.delete(v); } else { activeTags.add(v); }
+      currentPage = 1;
       applyFilters();
     });
   }
 
   function renderCheckboxes(containerId, values, activeSet, onChange) {
-    const container = document.getElementById(containerId);
+    var container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
     if (values.length === 0) {
       container.innerHTML = '<span style="font-size:0.78rem;color:#bbb">None available</span>';
       return;
     }
-    values.forEach(val => {
-      const label = document.createElement('label');
+    values.forEach(function(val) {
+      var label = document.createElement('label');
       label.className = 'bymm-filter-check';
-      const cb = document.createElement('input');
+      var cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = activeSet.has(val);
-      cb.addEventListener('change', () => onChange(val));
+      cb.addEventListener('change', function() { onChange(val); });
       label.appendChild(cb);
       label.appendChild(document.createTextNode(val));
       container.appendChild(label);
@@ -591,36 +589,39 @@
   }
 
   function applyFilters() {
-    currentPage = 1;
-    let result = [...allProducts];
+    var result = allProducts.slice();
 
     if (activeVendors.size > 0) {
-      result = result.filter(p => activeVendors.has(p.vendor));
+      result = result.filter(function(p) { return activeVendors.has(p.vendor); });
     }
     if (activeTypes.size > 0) {
-      result = result.filter(p => activeTypes.has(p.product_type));
+      result = result.filter(function(p) { return activeTypes.has(p.product_type); });
     }
     if (activeTags.size > 0) {
-      const productTags = p => p.tags ? p.tags.split(',').map(t => t.trim()) : [];
-      result = result.filter(p => productTags(p).some(t => activeTags.has(t)));
+      result = result.filter(function(p) {
+        var ptags = p.tags ? p.tags.split(',').map(function(t) { return t.trim(); }) : [];
+        return ptags.some(function(t) { return activeTags.has(t); });
+      });
     }
     if (minPrice !== null) {
-      result = result.filter(p => parseFloat(p.price || 0) >= minPrice);
+      result = result.filter(function(p) { return parseFloat(p.price || 0) >= minPrice; });
     }
     if (maxPrice !== null) {
-      result = result.filter(p => parseFloat(p.price || 0) <= maxPrice);
+      result = result.filter(function(p) { return parseFloat(p.price || 0) <= maxPrice; });
     }
     if (inStockOnly) {
-      result = result.filter(p => p.inventory_quantity === null || p.inventory_quantity > 0);
+      result = result.filter(function(p) {
+        return p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0;
+      });
     }
     if (sortOrder === 'price-asc') {
-      result.sort((a, b) => parseFloat(a.price || 0) - parseFloat(b.price || 0));
+      result.sort(function(a, b) { return parseFloat(a.price || 0) - parseFloat(b.price || 0); });
     } else if (sortOrder === 'price-desc') {
-      result.sort((a, b) => parseFloat(b.price || 0) - parseFloat(a.price || 0));
+      result.sort(function(a, b) { return parseFloat(b.price || 0) - parseFloat(a.price || 0); });
     } else if (sortOrder === 'title-asc') {
-      result.sort((a, b) => (a.product_title || '').localeCompare(b.product_title || ''));
+      result.sort(function(a, b) { return (a.product_title || '').localeCompare(b.product_title || ''); });
     } else if (sortOrder === 'title-desc') {
-      result.sort((a, b) => (b.product_title || '').localeCompare(a.product_title || ''));
+      result.sort(function(a, b) { return (b.product_title || '').localeCompare(a.product_title || ''); });
     }
 
     filteredProducts = result;
@@ -628,28 +629,27 @@
   }
 
   function renderGrid() {
-  const total = filteredProducts.length;
-  const showing = Math.min(currentPage * PAGE_SIZE, total);
-  const visible = filteredProducts.slice(0, showing);
+    var total   = filteredProducts.length;
+    var showing = Math.min(currentPage * PAGE_SIZE, total);
+    var visible = filteredProducts.slice(0, showing);
 
-  countEl.textContent = total + ' part(s) found';
+    countEl.textContent = total + ' part(s) found';
 
-  if (total === 0) {
-    gridEl.innerHTML = '';
-    emptyEl.style.display = 'block';
-    showMoreWrap.style.display = 'none';
-  } else {
-    emptyEl.style.display = 'none';
-    gridEl.innerHTML = visible.map(buildCard).join('');
-    if (showing < total) {
-      const remaining = total - showing;
-      showMoreWrap.style.display = 'block';
-      remainingEl.textContent = '(' + remaining + ' more)';
-    } else {
+    if (total === 0) {
+      gridEl.innerHTML = '';
+      emptyEl.style.display = 'block';
       showMoreWrap.style.display = 'none';
+    } else {
+      emptyEl.style.display = 'none';
+      gridEl.innerHTML = visible.map(buildCard).join('');
+      if (showing < total) {
+        showMoreWrap.style.display = 'block';
+        remainingEl.textContent = '(' + (total - showing) + ' more)';
+      } else {
+        showMoreWrap.style.display = 'none';
+      }
     }
   }
-}
 
   function clearFilters() {
     activeVendors.clear();
@@ -658,18 +658,20 @@
     minPrice = null;
     maxPrice = null;
     inStockOnly = false;
+    currentPage = 1;
     document.getElementById('price-min').value = '';
     document.getElementById('price-max').value = '';
     document.getElementById('filter-instock').checked = false;
-    document.querySelectorAll('.bymm-filter-check input').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.bymm-filter-check input').forEach(function(cb) { cb.checked = false; });
     applyFilters();
   }
 
-  // Filter accordion
-  document.querySelectorAll('.bymm-filter-title').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const body = document.getElementById(btn.dataset.target);
-      const isOpen = body.classList.contains('open');
+  document.querySelectorAll('.bymm-filter-title').forEach(function(btn) {
+    var body = document.getElementById(btn.dataset.target);
+    if (body) { body.classList.add('open'); btn.classList.add('open'); }
+    btn.addEventListener('click', function() {
+      if (!body) return;
+      var isOpen = body.classList.contains('open');
       body.classList.toggle('open', !isOpen);
       btn.classList.toggle('open', !isOpen);
     });
@@ -677,26 +679,70 @@
 
   document.getElementById('bymm-clear').addEventListener('click', clearFilters);
   document.getElementById('bymm-clear-2').addEventListener('click', clearFilters);
-  document.getElementById('filter-instock').addEventListener('change', e => {
+  document.getElementById('filter-instock').addEventListener('change', function(e) {
     inStockOnly = e.target.checked;
+    currentPage = 1;
     applyFilters();
   });
-  document.getElementById('bymm-sort').addEventListener('change', e => {
+  document.getElementById('bymm-sort').addEventListener('change', function(e) {
     sortOrder = e.target.value;
+    currentPage = 1;
     applyFilters();
   });
-  document.getElementById('bymm-apply-price').addEventListener('click', () => {
+  document.getElementById('bymm-apply-price').addEventListener('click', function() {
     minPrice = document.getElementById('price-min').value ? parseFloat(document.getElementById('price-min').value) : null;
     maxPrice = document.getElementById('price-max').value ? parseFloat(document.getElementById('price-max').value) : null;
+    currentPage = 1;
     applyFilters();
   });
-  document.getElementById('bymm-show-more').addEventListener('click', () => {
+  document.getElementById('bymm-show-more').addEventListener('click', function() {
     currentPage++;
     renderGrid();
-    const cards = gridEl.querySelectorAll('.bymm-card');
-    const firstNew = cards[(currentPage - 1) * PAGE_SIZE];
+    var cards = gridEl.querySelectorAll('.bymm-card');
+    var firstNew = cards[(currentPage - 1) * PAGE_SIZE];
     if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+
+  async function loadFittedProducts() {
+    var body = '{"p_make":"' + SELECTED_MAKE + '","p_model":"' + SELECTED_MODEL + '","p_year":"' + SELECTED_YEAR + '"}';
+    var res = await fetch(
+      SUPABASE_URL + '/rest/v1/rpc/get_fitment_product_ids',
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: body
+      }
+    );
+    var ids = await res.json();
+    if (!ids || ids.length === 0) return [];
+
+    var products = [];
+    var chunkSize = 50;
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      var chunk = ids.slice(i, i + chunkSize);
+      var idFilter = chunk.map(function(id) { return 'shopify_product_id.eq.' + id; }).join(',');
+      var r = await fetch(
+        SUPABASE_URL + '/rest/v1/shopify_products?or=(' + idFilter + ')&select=shopify_product_id,product_title,product_handle,price,image_url,vendor,product_type,tags,inventory_quantity',
+        { headers: HEADERS }
+      );
+      var data = await r.json();
+      products = products.concat(data || []);
+    }
+    return products;
+  }
+
+  async function loadUniversalProducts() {
+    var res = await fetch(
+      SUPABASE_URL + '/rest/v1/rpc/get_universal_products',
+      {
+        method: 'POST',
+        headers: HEADERS,
+        body: '{}'
+      }
+    );
+    var data = await res.json();
+    return data || [];
+  }
 
   async function init() {
     if (!SELECTED_MAKE || !SELECTED_MODEL || !SELECTED_YEAR) {
@@ -708,27 +754,8 @@
     titleEl.textContent = SELECTED_YEAR + ' ' + SELECTED_MAKE + ' ' + SELECTED_MODEL;
 
     try {
-      const [fitRes, uniRes] = await Promise.all([
-        fetch(SUPABASE_URL + '/rest/v1/rpc/get_fitment_products', {
-          method: 'POST',
-          headers: HEADERS,
-          body: JSON.stringify({
-            p_make: SELECTED_MAKE,
-            p_model: SELECTED_MODEL,
-            p_year: SELECTED_YEAR
-          })
-        }),
-        fetch(SUPABASE_URL + '/rest/v1/rpc/get_universal_products', {
-          method: 'POST',
-          headers: HEADERS,
-          body: '{}'
-        })
-      ]);
-
-      const [fittedData, universalData] = await Promise.all([
-        fitRes.json(),
-        uniRes.json()
-      ]);
+      var fittedData = await loadFittedProducts();
+      var universalData = await loadUniversalProducts();
 
       loadingEl.style.display = 'none';
 
@@ -753,5 +780,4 @@
   }
 
   init();
-{% endraw %}
 </script>
