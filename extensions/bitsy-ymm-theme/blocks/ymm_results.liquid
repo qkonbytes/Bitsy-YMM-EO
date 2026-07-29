@@ -703,35 +703,20 @@
     if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  async function loadFittedProducts() {
-    var body = '{"p_make":"' + SELECTED_MAKE + '","p_model":"' + SELECTED_MODEL + '","p_year":"' + SELECTED_YEAR + '"}';
-    var res = await fetch(
-      SUPABASE_URL + '/rest/v1/rpc/get_fitment_product_ids',
-      {
-        method: 'POST',
-        headers: HEADERS,
-        body: body
-      }
-    );
-    var ids = await res.json();
-    console.log('IDs from RPC:', ids ? ids.length : 0);
-    if (!ids || ids.length === 0) return [];
-
-    var products = [];
-    var chunkSize = 10;
-    for (var i = 0; i < ids.length; i += chunkSize) {
-      var chunk = ids.slice(i, i + chunkSize);
-      var idFilter = chunk.map(function(id) { return 'shopify_product_id.eq.' + id; }).join(',');
-      var url = SUPABASE_URL + '/rest/v1/shopify_products?or=(' + idFilter + ')&select=shopify_product_id,product_title,product_handle,price,image_url,vendor,product_type,tags,inventory_quantity';
-      console.log('Fetching chunk', Math.floor(i/chunkSize) + 1, 'URL:', url);
-      var r = await fetch(url, { headers: HEADERS });
-      var data = await r.json();
-      console.log('Chunk', Math.floor(i/chunkSize) + 1, 'returned:', data ? data.length : 0, 'products');
-      products = products.concat(data || []);
+async function loadFittedProducts() {
+  var body = '{"p_make":"' + SELECTED_MAKE + '","p_model":"' + SELECTED_MODEL + '","p_year":"' + SELECTED_YEAR + '"}';
+  var res = await fetch(
+    SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
+    {
+      method: 'POST',
+      headers: HEADERS,
+      body: body
     }
-    console.log('Total products fetched:', products.length);
-    return products;
-  }
+  );
+  var data = await res.json();
+  console.log('Products from RPC:', data ? data.length : 0);
+  return data || [];
+}
 
   async function loadUniversalProducts() {
     var res = await fetch(
