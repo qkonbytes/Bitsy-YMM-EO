@@ -1,59 +1,39 @@
-const { fullSync, deltaSync } = require('./sync');
+const { fullSync } = require('./sync');
 const supabase = require('./supabase');
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  try {
-    let sessions = [];
+  let shop = req.body?.shop;
+  let access_token = req.body?.access_token;
 
-    // Try Supabase first
-    const { data, error } = await supabase
+  // If no credentials in body, look up from app_sessions
+  if (!shop || !access_token) {
+    // Use env variable store domain or get first session
+    shop = process.env.SHOPIFY_STORE_DOMAIN;
+    
+    const { data: session, error } = await supabase
       .from('app_sessions')
-      .select('shop, access_token');
+      .select('shop, access_token')
+      .eq('shop', shop)
+      .single();
 
-    if (!error && data && data.length > 0) {
-      sessions = data;
-    } else if (process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_ACCESS_TOKEN) {
-      // Fall back to env vars
-      sessions = [{
-        shop: process.env.SHOPIFY_STORE_DOMAIN,
-        access_token: process.env.SHOPIFY_ACCESS_TOKEN
-      }];
+    if (error || !session) {
+      return res.status(401).json({ error: 'No valid session found for ' + shop });
     }
 
-    if (sessions.length === 0) {
-      return res.status(400).json({ error: 'No store sessions found' });
-    }
+    access_token = session.access_token;
+  }
 
-    let totalSynced = 0;
-    const results = [];
+  console.log('Syncing shop:', shop);
 
-    for (const session of sessions) {
-      try {
-        const result = await fullSync(session.shop, session.access_token);
-        totalSynced += result.synced || 0;
-        results.push({ shop: session.shop, ...result });
-      } catch (err) {
-        results.push({ shop: session.shop, error: err.message });
-      }
-    }
-
-    return res.status(200).json({ 
-      success: true, 
-      synced: totalSynced,
-      results 
-    });
-
+  try {
+    const result = await fullSync(shop, access_token);
+    return res.status(200).json({ success: true, ...result });
   } catch (err) {
-    console.error('Trigger sync error:', err);
+    console.error('Sync error:', err);
     return res.status(500).json({ error: err.message });
   }
 };
