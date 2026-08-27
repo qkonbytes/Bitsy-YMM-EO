@@ -51,16 +51,61 @@ function mapProduct(product) {
 // Full sync — used on install and manual trigger
 async function fullSync(shop, accessToken) {
   console.log(`Starting full sync for ${shop}`);
-  const products = await fetchAllShopifyProducts(shop, accessToken);
-  console.log(`Fetched ${products.length} products from Shopify`);
 
-  const mapped = products
-    .map(mapProduct)
-    .filter(p => p.sku && p.sku.trim() !== '');
+  // Get last synced product ID
+  const { data: lastProduct } = await supabase
+    .from('shopify_products')
+    .select('shopify_product_id')
+    .order('shopify_product_id', { ascending: false })
+    .limit(1);
 
-  if (mapped.length === 0) {
-    return { synced: 0, message: 'No products with SKUs found' };
+  let sinceId = lastProduct?.[0]?.shopify_product_id || 0;
+  console.log(`Resuming from product ID: ${sinceId}`);
+
+  let totalSynced = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = `https://${shop}/admin/api/2024-01/products.json?limit=250&since_id=${sinceId}&fields=id,title,handle,variants,images,vendor,product_type,tags,status`;
+
+    const res = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': accessToken,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await res.json();
+    const batch = data.products || [];
+
+    if (batch.length === 0) {
+      console.log('Sync complete');
+      break;
+    }
+
+    const mapped = batch
+      .map(mapProduct)
+      .filter(p => p.sku && p.sku.trim() !== '');
+
+    if (mapped.length > 0) {
+      const { error } = await supabase
+        .from('shopify_products')
+        .upsert(mapped, { onConflict: 'shopify_product_id' });
+
+      if (error) console.error('Upsert error:', error.message);
+    }
+
+    sinceId = batch[batch.length - 1].id;
+    totalSynced += batch.length;
+    console.log(`Synced ${totalSynced} products, last id: ${sinceId}`);
+
+    if (batch.length < 250) {
+      hasMore = false;
+    }
   }
+
+  return { synced: totalSynced };
+}
 
   // Deduplicate by SKU — keep last occurrence
   const skuMap = {};
