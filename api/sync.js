@@ -3,24 +3,31 @@ const supabase = require('./supabase');
 // Fetch all products from Shopify with pagination
 async function fetchAllShopifyProducts(shop, accessToken) {
   let products = [];
-  let url = `https://${shop}/admin/api/2024-01/products.json?limit=250&fields=id,title,handle,variants,images`;
-  while (url) {
+  let sinceId = 0;
+  
+  while (true) {
+    const url = `https://${shop}/admin/api/2024-01/products.json?limit=250&since_id=${sinceId}&fields=id,title,handle,variants,images,vendor,product_type,tags,status`;
+    
     const res = await fetch(url, {
       headers: {
         'X-Shopify-Access-Token': accessToken,
         'Content-Type': 'application/json'
       }
     });
+    
     const data = await res.json();
-    products = products.concat(data.products || []);
-    const linkHeader = res.headers.get('Link');
-    if (linkHeader && linkHeader.includes('rel="next"')) {
-      const match = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
-      url = match ? match[1] : null;
-    } else {
-      url = null;
-    }
+    const batch = data.products || [];
+    
+    if (batch.length === 0) break;
+    
+    products = products.concat(batch);
+    sinceId = batch[batch.length - 1].id;
+    
+    console.log(`Fetched ${products.length} products so far, last id: ${sinceId}`);
+    
+    if (batch.length < 250) break;
   }
+  
   return products;
 }
 
