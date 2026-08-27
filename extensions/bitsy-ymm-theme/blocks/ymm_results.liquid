@@ -81,11 +81,12 @@
       </div>
 
       <div class="bymm-filter-group">
-        <button class="bymm-filter-title open" data-target="filter-tags">
-          Tags <span class="bymm-chevron">&#9660;</span>
+        <button class="bymm-filter-title open" data-target="filter-vehicle">
+          Vehicle <span class="bymm-chevron">&#9660;</span>
         </button>
-        <div class="bymm-filter-body open" id="filter-tags"></div>
+        <div class="bymm-filter-body open" id="filter-vehicle"></div>
       </div>
+
     </aside>
 
     <div class="bymm-product-area">
@@ -118,14 +119,6 @@
   <div id="bymm-no-results" class="bymm-empty" style="display:none;">
     <p>No parts found for your vehicle.</p>
     <a href="/" class="bymm-back-btn">Search Again</a>
-  </div>
-
-  <div class="bymm-universal" id="bymm-universal" style="display:none;">
-    <div class="bymm-universal-header">
-      <h2 class="bymm-universal-title">Universal Fit Parts</h2>
-      <p class="bymm-universal-sub">These parts are compatible with all vehicles</p>
-    </div>
-    <div id="bymm-universal-grid" class="bymm-grid"></div>
   </div>
 
 </div>
@@ -227,13 +220,8 @@
     padding: 0;
     text-align: left;
   }
-  .bymm-chevron {
-    font-size: 0.65rem;
-    transition: transform 0.2s;
-  }
-  .bymm-filter-title.open .bymm-chevron {
-    transform: rotate(180deg);
-  }
+  .bymm-chevron { font-size: 0.65rem; transition: transform 0.2s; }
+  .bymm-filter-title.open .bymm-chevron { transform: rotate(180deg); }
   .bymm-filter-body {
     margin-top: 0.6rem;
     display: none;
@@ -242,9 +230,7 @@
     max-height: 180px;
     overflow-y: auto;
   }
-  .bymm-filter-body.open {
-    display: flex;
-  }
+  .bymm-filter-body.open { display: flex; }
   .bymm-filter-check {
     display: flex;
     align-items: center;
@@ -310,9 +296,7 @@
     border-radius: 50%;
     transition: transform 0.2s;
   }
-  .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb {
-    transform: translateX(16px);
-  }
+  .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb { transform: translateX(16px); }
   .bymm-sort-bar {
     display: flex;
     justify-content: space-between;
@@ -397,17 +381,6 @@
     transition: opacity 0.15s;
   }
   .bymm-card-btn:hover { opacity: 0.85; }
-  .bymm-card-oos {
-    display: block;
-    width: 100%;
-    padding: 0.55rem;
-    text-align: center;
-    color: #999;
-    background: #f5f5f5;
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
-    font-size: 0.82rem;
-  }
   .bymm-empty {
     text-align: center;
     padding: 4rem 2rem;
@@ -436,26 +409,7 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  .bymm-show-more-btn:hover {
-    background: #111;
-    color: white;
-  }
-  .bymm-universal {
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 2px solid #f0f0f0;
-  }
-  .bymm-universal-header { margin-bottom: 1.5rem; }
-  .bymm-universal-title {
-    font-size: 1.3rem;
-    font-weight: 800;
-    margin: 0 0 0.3rem;
-  }
-  .bymm-universal-sub {
-    font-size: 0.85rem;
-    color: #999;
-    margin: 0;
-  }
+  .bymm-show-more-btn:hover { background: #111; color: white; }
   @media (max-width: 768px) {
     .bymm-layout { grid-template-columns: 1fr; }
     .bymm-filters { position: static; }
@@ -467,6 +421,7 @@
 <script>
   var SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
+  var VEHICLE_TAGS = ['ATV', 'Dirt Bike', 'UTV', 'Adventure'];
 
   var urlParams = new URLSearchParams(window.location.search);
   var SELECTED_MAKE  = urlParams.get('make') || '';
@@ -483,7 +438,7 @@
   var filteredProducts = [];
   var activeVendors = new Set();
   var activeTypes = new Set();
-  var activeTags = new Set();
+  var activeVehicleTags = new Set();
   var minPrice = null;
   var maxPrice = null;
   var inStockOnly = false;
@@ -498,18 +453,15 @@
   var emptyEl      = document.getElementById('bymm-empty');
   var noResultsEl  = document.getElementById('bymm-no-results');
   var countEl      = document.getElementById('bymm-count');
-  var universalEl  = document.getElementById('bymm-universal');
-  var uniGridEl    = document.getElementById('bymm-universal-grid');
   var showMoreWrap = document.getElementById('bymm-show-more-wrap');
   var remainingEl  = document.getElementById('bymm-remaining');
 
   function buildCard(p) {
-    var img    = p.image_url || '';
-    var title  = p.product_title || 'Product';
+    var img    = p.image_url || p.featured_image || '';
+    var title  = p.product_title || p.title || 'Product';
     var price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
-    var handle = p.product_handle || '';
+    var handle = p.product_handle || p.handle || '';
     var vendor = p.vendor || '';
-    var inStock = p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0;
 
     return '<div class="bymm-card">' +
       (img
@@ -519,49 +471,54 @@
         (vendor ? '<p class="bymm-card-vendor">' + vendor + '</p>' : '') +
         '<p class="bymm-card-title">' + title + '</p>' +
         (price ? '<p class="bymm-card-price">' + price + '</p>' : '') +
-        (handle
-          ? (inStock
-              ? '<a href="/products/' + handle + '" class="bymm-card-btn">View Product</a>'
-              : '<span class="bymm-card-oos">Out of stock</span>')
-          : '') +
+        (handle ? '<a href="/products/' + handle + '" class="bymm-card-btn">View Product</a>' : '') +
       '</div></div>';
   }
 
   function buildFilters(products) {
-    var vendors = [];
-    var types = [];
-    var tags = [];
     var vendorSet = {};
     var typeSet = {};
-    var tagSet = {};
+    var vendors = [];
+    var types = [];
 
     products.forEach(function(p) {
-      if (p.vendor && !vendorSet[p.vendor]) { vendorSet[p.vendor] = true; vendors.push(p.vendor); }
-      if (p.product_type && !typeSet[p.product_type]) { typeSet[p.product_type] = true; types.push(p.product_type); }
-      if (p.tags) {
-        p.tags.split(',').forEach(function(t) {
-          t = t.trim();
-          if (t && !tagSet[t]) { tagSet[t] = true; tags.push(t); }
-        });
-      }
+      var v = p.vendor || '';
+      var t = p.product_type || '';
+      if (v && !vendorSet[v]) { vendorSet[v] = true; vendors.push(v); }
+      if (t && !typeSet[t]) { typeSet[t] = true; types.push(t); }
     });
 
     vendors.sort();
     types.sort();
-    tags.sort();
 
     renderCheckboxes('filter-vendor', vendors, activeVendors, function(v) {
       if (activeVendors.has(v)) { activeVendors.delete(v); } else { activeVendors.add(v); }
       currentPage = 1;
       applyFilters();
     });
+
     renderCheckboxes('filter-type', types, activeTypes, function(v) {
       if (activeTypes.has(v)) { activeTypes.delete(v); } else { activeTypes.add(v); }
       currentPage = 1;
       applyFilters();
     });
-    renderCheckboxes('filter-tags', tags.slice(0, 30), activeTags, function(v) {
-      if (activeTags.has(v)) { activeTags.delete(v); } else { activeTags.add(v); }
+
+    // Vehicle filter — only show ATV, Dirt Bike, UTV, Adventure
+    var availableVehicleTags = [];
+    var tagSet = {};
+    products.forEach(function(p) {
+      var ptags = p.tags || [];
+      if (typeof ptags === 'string') ptags = ptags.split(',').map(function(t) { return t.trim(); });
+      ptags.forEach(function(t) {
+        if (VEHICLE_TAGS.indexOf(t) !== -1 && !tagSet[t]) {
+          tagSet[t] = true;
+          availableVehicleTags.push(t);
+        }
+      });
+    });
+
+    renderCheckboxes('filter-vehicle', availableVehicleTags, activeVehicleTags, function(v) {
+      if (activeVehicleTags.has(v)) { activeVehicleTags.delete(v); } else { activeVehicleTags.add(v); }
       currentPage = 1;
       applyFilters();
     });
@@ -597,10 +554,11 @@
     if (activeTypes.size > 0) {
       result = result.filter(function(p) { return activeTypes.has(p.product_type); });
     }
-    if (activeTags.size > 0) {
+    if (activeVehicleTags.size > 0) {
       result = result.filter(function(p) {
-        var ptags = p.tags ? p.tags.split(',').map(function(t) { return t.trim(); }) : [];
-        return ptags.some(function(t) { return activeTags.has(t); });
+        var ptags = p.tags || [];
+        if (typeof ptags === 'string') ptags = ptags.split(',').map(function(t) { return t.trim(); });
+        return ptags.some(function(t) { return activeVehicleTags.has(t); });
       });
     }
     if (minPrice !== null) {
@@ -611,7 +569,7 @@
     }
     if (inStockOnly) {
       result = result.filter(function(p) {
-        return p.inventory_quantity === null || p.inventory_quantity === undefined || p.inventory_quantity > 0;
+        return p.available !== false;
       });
     }
     if (sortOrder === 'price-asc') {
@@ -619,9 +577,9 @@
     } else if (sortOrder === 'price-desc') {
       result.sort(function(a, b) { return parseFloat(b.price || 0) - parseFloat(a.price || 0); });
     } else if (sortOrder === 'title-asc') {
-      result.sort(function(a, b) { return (a.product_title || '').localeCompare(b.product_title || ''); });
+      result.sort(function(a, b) { return (a.product_title || a.title || '').localeCompare(b.product_title || b.title || ''); });
     } else if (sortOrder === 'title-desc') {
-      result.sort(function(a, b) { return (b.product_title || '').localeCompare(a.product_title || ''); });
+      result.sort(function(a, b) { return (b.product_title || b.title || '').localeCompare(a.product_title || a.title || ''); });
     }
 
     filteredProducts = result;
@@ -654,7 +612,7 @@
   function clearFilters() {
     activeVendors.clear();
     activeTypes.clear();
-    activeTags.clear();
+    activeVehicleTags.clear();
     minPrice = null;
     maxPrice = null;
     inStockOnly = false;
@@ -703,37 +661,39 @@
     if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-async function loadFittedProducts() {
-  var body = '{"p_make":"' + SELECTED_MAKE + '","p_model":"' + SELECTED_MODEL + '","p_year":"' + SELECTED_YEAR + '"}';
-console.log('Calling RPC with body:', body);
-console.log('SELECTED_MAKE:', SELECTED_MAKE);
-console.log('SELECTED_MODEL:', SELECTED_MODEL);
-console.log('SELECTED_YEAR:', SELECTED_YEAR);
-  var res = await fetch(
-    SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
-    {
-      method: 'POST',
-      headers: HEADERS,
-      body: body
-    }
-  );
-  var data = await res.json();
-  console.log('Products from RPC:', data ? data.length : 0);
-  return data || [];
-}
-
-  async function loadUniversalProducts() {
+  async function loadFittedProducts() {
+    var body = '{"p_make":"' + SELECTED_MAKE + '","p_model":"' + SELECTED_MODEL + '","p_year":"' + SELECTED_YEAR + '"}';
     var res = await fetch(
-      SUPABASE_URL + '/rest/v1/rpc/get_universal_products',
-      {
-        method: 'POST',
-        headers: HEADERS,
-        body: '{}'
-      }
+      SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
+      { method: 'POST', headers: HEADERS, body: body }
     );
-var data = await res.json();
-console.log('Full RPC response:', JSON.stringify(data));
-return data || [];
+    var supabaseProducts = await res.json();
+    if (!supabaseProducts || supabaseProducts.length === 0) return [];
+
+    // Fetch full product details from Shopify storefront
+    var products = [];
+    for (var i = 0; i < supabaseProducts.length; i++) {
+      var handle = supabaseProducts[i].product_handle;
+      if (!handle) continue;
+      try {
+        var shopRes = await fetch('/products/' + handle + '.js');
+        var shopData = await shopRes.json();
+        products.push({
+          product_title: shopData.title,
+          product_handle: shopData.handle,
+          vendor: shopData.vendor,
+          product_type: shopData.type,
+          tags: shopData.tags,
+          price: shopData.price ? (shopData.price / 100).toFixed(2) : null,
+          image_url: shopData.featured_image,
+          available: shopData.available,
+          shopify_product_id: supabaseProducts[i].shopify_product_id
+        });
+      } catch (err) {
+        console.error('Failed to fetch product:', handle, err);
+      }
+    }
+    return products;
   }
 
   async function init() {
@@ -747,7 +707,6 @@ return data || [];
 
     try {
       var fittedData = await loadFittedProducts();
-      var universalData = await loadUniversalProducts();
 
       loadingEl.style.display = 'none';
 
@@ -760,11 +719,6 @@ return data || [];
         applyFilters();
       }
 
-      if (universalData && universalData.length > 0) {
-        universalEl.style.display = 'block';
-        uniGridEl.innerHTML = universalData.map(buildCard).join('');
-      }
-
     } catch (err) {
       loadingEl.textContent = 'Failed to load results. Please try again.';
       console.error(err);
@@ -773,4 +727,3 @@ return data || [];
 
   init();
 </script>
-
