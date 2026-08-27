@@ -1,5 +1,5 @@
-const SUPABASE_URL = 'https://urffwytspjtqnpeubmjz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyZmZ3eXRzcGp0cW5wZXVibWp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MjAxMDMsImV4cCI6MjEwMzM5NjEwM30.8fKCpIxBV3jd3osCQcJSk1MQD6R4jLnHBMNGTtsxGHc';
+const SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
 
 const makeSelect = document.getElementById('bitsy-make');
 const modelSelect = document.getElementById('bitsy-model');
@@ -86,3 +86,4 @@ searchBtn.addEventListener('click', function() {
 });
 
 loadMakes();
+
