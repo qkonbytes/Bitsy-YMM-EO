@@ -26,7 +26,10 @@
       <span class="bymm-label">Results for</span>
       <h1 class="bymm-title" id="bymm-title">Loading...</h1>
     </div>
-    <a href="/" class="bymm-change">Change vehicle</a>
+    <div class="bymm-header-actions">
+  	<a href="/pages/universal-products" class="bymm-universal-btn">Universal Products</a>
+  	<a href="/" class="bymm-change">Change vehicle</a>
+	</div>
   </div>
 
   <div id="bymm-loading" class="bymm-loading">
@@ -101,6 +104,20 @@
     white-space: nowrap;
     margin-left: 1rem;
   }
+  .bymm-header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .bymm-universal-btn {
+    font-size: 0.85rem;
+    color: white;
+    background: {{ block.settings.button_color }};
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
   .bymm-loading {
     text-align: center;
     padding: 4rem 2rem;
@@ -133,7 +150,7 @@
   }
   .bymm-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 1.25rem;
     margin-bottom: 2rem;
   }
