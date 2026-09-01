@@ -34,33 +34,28 @@
     <p>Finding parts for your vehicle...</p>
   </div>
 
-  <div class="bymm-layout" id="bymm-layout" style="display:none;">
+  <div class="bymm-product-area" id="bymm-layout" style="display:none;">
+    <div class="bymm-sort-bar">
+      <span class="bymm-count" id="bymm-count"></span>
+      <select class="bymm-sort-select" id="bymm-sort">
+        <option value="default">Sort: Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="title-asc">Name: A-Z</option>
+        <option value="title-desc">Name: Z-A</option>
+      </select>
+    </div>
 
-   
-    <div class="bymm-product-area">
-      <div class="bymm-sort-bar">
-        <span class="bymm-count" id="bymm-count"></span>
-        <select class="bymm-sort-select" id="bymm-sort">
-          <option value="default">Sort: Featured</option>
-          <option value="price-asc">Price: Low to High</option>
-          <option value="price-desc">Price: High to Low</option>
-          <option value="title-asc">Name: A-Z</option>
-          <option value="title-desc">Name: Z-A</option>
-        </select>
-      </div>
+    <div id="bymm-grid" class="bymm-grid"></div>
 
-      <div id="bymm-grid" class="bymm-grid"></div>
+    <div id="bymm-empty" class="bymm-empty" style="display:none;">
+      <p>No parts found for your vehicle.</p>
+    </div>
 
-      <div id="bymm-empty" class="bymm-empty" style="display:none;">
-        <p>No parts found with the current filters.</p>
-        <button class="bymm-back-btn" id="bymm-clear-2">Clear filters</button>
-      </div>
-
-      <div id="bymm-show-more-wrap" style="display:none; text-align:center; margin-top:1.5rem;">
-        <button id="bymm-show-more" class="bymm-show-more-btn">
-          Show More <span id="bymm-remaining"></span>
-        </button>
-      </div>
+    <div id="bymm-show-more-wrap" style="display:none; text-align:center; margin-top:1.5rem;">
+      <button id="bymm-show-more" class="bymm-show-more-btn">
+        Show More <span id="bymm-remaining"></span>
+      </button>
     </div>
   </div>
 
@@ -121,128 +116,6 @@
     margin: 0 auto 1rem;
   }
   @keyframes bymm-spin { to { transform: rotate(360deg); } }
-.bymm-layout {
-    display: block;
-  }
-
-  .bymm-filters {
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 1rem;
-    position: sticky;
-    top: 1rem;
-  }
-  .bymm-filter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-  .bymm-clear-btn {
-    font-size: 0.78rem;
-    color: {{ block.settings.accent_color }};
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 0;
-  }
-  .bymm-filter-group {
-    border-top: 1px solid #f0f0f0;
-    padding: 0.65rem 0;
-  }
-  .bymm-filter-title {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: none;
-    border: none;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0;
-    text-align: left;
-  }
-  .bymm-chevron { font-size: 0.65rem; transition: transform 0.2s; }
-  .bymm-filter-title.open .bymm-chevron { transform: rotate(180deg); }
-  .bymm-filter-body {
-    margin-top: 0.6rem;
-    display: none;
-    flex-direction: column;
-    gap: 0.4rem;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-  .bymm-filter-body.open { display: flex; }
-  .bymm-filter-check {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.82rem;
-    cursor: pointer;
-  }
-  .bymm-filter-check input {
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-    accent-color: #111;
-  }
-  .bymm-price-inputs {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .bymm-price-input {
-    width: 70px;
-    padding: 0.35rem 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.82rem;
-  }
-  .bymm-apply-price {
-    width: 100%;
-    padding: 0.4rem;
-    background: #111;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.82rem;
-    cursor: pointer;
-  }
-  .bymm-toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .bymm-toggle-input { display: none; }
-  .bymm-toggle-track {
-    width: 36px;
-    height: 20px;
-    background: #ddd;
-    border-radius: 10px;
-    position: relative;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .bymm-toggle-input:checked + .bymm-toggle-track { background: #111; }
-  .bymm-toggle-thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-  }
-  .bymm-toggle-input:checked + .bymm-toggle-track .bymm-toggle-thumb { transform: translateX(16px); }
   .bymm-sort-bar {
     display: flex;
     justify-content: space-between;
@@ -357,8 +230,6 @@
   }
   .bymm-show-more-btn:hover { background: #111; color: white; }
   @media (max-width: 768px) {
-    .bymm-layout { grid-template-columns: 1fr; }
-    .bymm-filters { position: static; }
     .bymm-grid { grid-template-columns: repeat(2, 1fr); }
     .bymm-title { font-size: 1.2rem; }
   }
@@ -367,7 +238,6 @@
 <script>
   var SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
-  var VEHICLE_TAGS = ['ATV', 'Dirt Bike', 'UTV', 'Adventure'];
 
   var urlParams = new URLSearchParams(window.location.search);
   var SELECTED_MAKE  = urlParams.get('make') || '';
@@ -382,31 +252,25 @@
 
   var allProducts = [];
   var filteredProducts = [];
-  var activeVendors = new Set();
-  var activeTypes = new Set();
-  var activeVehicleTags = new Set();
-  var minPrice = null;
-  var maxPrice = null;
-  var inStockOnly = false;
   var sortOrder = 'default';
   var currentPage = 1;
   var PAGE_SIZE = 20;
 
-  var titleEl      = document.getElementById('bymm-title');
-  var loadingEl    = document.getElementById('bymm-loading');
-  var layoutEl     = document.getElementById('bymm-layout');
-  var gridEl       = document.getElementById('bymm-grid');
-  var emptyEl      = document.getElementById('bymm-empty');
-  var noResultsEl  = document.getElementById('bymm-no-results');
-  var countEl      = document.getElementById('bymm-count');
+  var titleEl     = document.getElementById('bymm-title');
+  var loadingEl   = document.getElementById('bymm-loading');
+  var layoutEl    = document.getElementById('bymm-layout');
+  var gridEl      = document.getElementById('bymm-grid');
+  var emptyEl     = document.getElementById('bymm-empty');
+  var noResultsEl = document.getElementById('bymm-no-results');
+  var countEl     = document.getElementById('bymm-count');
   var showMoreWrap = document.getElementById('bymm-show-more-wrap');
-  var remainingEl  = document.getElementById('bymm-remaining');
+  var remainingEl = document.getElementById('bymm-remaining');
 
   function buildCard(p) {
-    var img    = p.image_url || p.featured_image || '';
-    var title  = p.product_title || p.title || 'Product';
+    var img    = p.image_url || '';
+    var title  = p.product_title || 'Product';
     var price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
-    var handle = p.product_handle || p.handle || '';
+    var handle = p.product_handle || '';
     var vendor = p.vendor || '';
 
     return '<div class="bymm-card">' +
@@ -421,113 +285,17 @@
       '</div></div>';
   }
 
-  function buildFilters(products) {
-    var vendorSet = {};
-    var typeSet = {};
-    var vendors = [];
-    var types = [];
-
-    products.forEach(function(p) {
-      var v = p.vendor || '';
-      var t = p.product_type || '';
-      if (v && !vendorSet[v]) { vendorSet[v] = true; vendors.push(v); }
-      if (t && !typeSet[t]) { typeSet[t] = true; types.push(t); }
-    });
-
-    vendors.sort();
-    types.sort();
-
-    renderCheckboxes('filter-vendor', vendors, activeVendors, function(v) {
-      if (activeVendors.has(v)) { activeVendors.delete(v); } else { activeVendors.add(v); }
-      currentPage = 1;
-      applyFilters();
-    });
-
-    renderCheckboxes('filter-type', types, activeTypes, function(v) {
-      if (activeTypes.has(v)) { activeTypes.delete(v); } else { activeTypes.add(v); }
-      currentPage = 1;
-      applyFilters();
-    });
-
-    // Vehicle filter — only show ATV, Dirt Bike, UTV, Adventure
-    var availableVehicleTags = [];
-    var tagSet = {};
-    products.forEach(function(p) {
-      var ptags = p.tags || [];
-      if (typeof ptags === 'string') ptags = ptags.split(',').map(function(t) { return t.trim(); });
-      ptags.forEach(function(t) {
-        if (VEHICLE_TAGS.indexOf(t) !== -1 && !tagSet[t]) {
-          tagSet[t] = true;
-          availableVehicleTags.push(t);
-        }
-      });
-    });
-
-    renderCheckboxes('filter-vehicle', availableVehicleTags, activeVehicleTags, function(v) {
-      if (activeVehicleTags.has(v)) { activeVehicleTags.delete(v); } else { activeVehicleTags.add(v); }
-      currentPage = 1;
-      applyFilters();
-    });
-  }
-
-  function renderCheckboxes(containerId, values, activeSet, onChange) {
-    var container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-    if (values.length === 0) {
-      container.innerHTML = '<span style="font-size:0.78rem;color:#bbb">None available</span>';
-      return;
-    }
-    values.forEach(function(val) {
-      var label = document.createElement('label');
-      label.className = 'bymm-filter-check';
-      var cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = activeSet.has(val);
-      cb.addEventListener('change', function() { onChange(val); });
-      label.appendChild(cb);
-      label.appendChild(document.createTextNode(val));
-      container.appendChild(label);
-    });
-  }
-
-  function applyFilters() {
+  function applySort() {
     var result = allProducts.slice();
-
-    if (activeVendors.size > 0) {
-      result = result.filter(function(p) { return activeVendors.has(p.vendor); });
-    }
-    if (activeTypes.size > 0) {
-      result = result.filter(function(p) { return activeTypes.has(p.product_type); });
-    }
-    if (activeVehicleTags.size > 0) {
-      result = result.filter(function(p) {
-        var ptags = p.tags || [];
-        if (typeof ptags === 'string') ptags = ptags.split(',').map(function(t) { return t.trim(); });
-        return ptags.some(function(t) { return activeVehicleTags.has(t); });
-      });
-    }
-    if (minPrice !== null) {
-      result = result.filter(function(p) { return parseFloat(p.price || 0) >= minPrice; });
-    }
-    if (maxPrice !== null) {
-      result = result.filter(function(p) { return parseFloat(p.price || 0) <= maxPrice; });
-    }
-    if (inStockOnly) {
-      result = result.filter(function(p) {
-        return p.available !== false;
-      });
-    }
     if (sortOrder === 'price-asc') {
       result.sort(function(a, b) { return parseFloat(a.price || 0) - parseFloat(b.price || 0); });
     } else if (sortOrder === 'price-desc') {
       result.sort(function(a, b) { return parseFloat(b.price || 0) - parseFloat(a.price || 0); });
     } else if (sortOrder === 'title-asc') {
-      result.sort(function(a, b) { return (a.product_title || a.title || '').localeCompare(b.product_title || b.title || ''); });
+      result.sort(function(a, b) { return (a.product_title || '').localeCompare(b.product_title || ''); });
     } else if (sortOrder === 'title-desc') {
-      result.sort(function(a, b) { return (b.product_title || b.title || '').localeCompare(a.product_title || a.title || ''); });
+      result.sort(function(a, b) { return (b.product_title || '').localeCompare(a.product_title || ''); });
     }
-
     filteredProducts = result;
     renderGrid();
   }
@@ -555,50 +323,12 @@
     }
   }
 
-  function clearFilters() {
-    activeVendors.clear();
-    activeTypes.clear();
-    activeVehicleTags.clear();
-    minPrice = null;
-    maxPrice = null;
-    inStockOnly = false;
-    currentPage = 1;
-    document.getElementById('price-min').value = '';
-    document.getElementById('price-max').value = '';
-    document.getElementById('filter-instock').checked = false;
-    document.querySelectorAll('.bymm-filter-check input').forEach(function(cb) { cb.checked = false; });
-    applyFilters();
-  }
-
-  document.querySelectorAll('.bymm-filter-title').forEach(function(btn) {
-    var body = document.getElementById(btn.dataset.target);
-    if (body) { body.classList.add('open'); btn.classList.add('open'); }
-    btn.addEventListener('click', function() {
-      if (!body) return;
-      var isOpen = body.classList.contains('open');
-      body.classList.toggle('open', !isOpen);
-      btn.classList.toggle('open', !isOpen);
-    });
-  });
-
-  document.getElementById('bymm-clear').addEventListener('click', clearFilters);
-  document.getElementById('bymm-clear-2').addEventListener('click', clearFilters);
-  document.getElementById('filter-instock').addEventListener('change', function(e) {
-    inStockOnly = e.target.checked;
-    currentPage = 1;
-    applyFilters();
-  });
   document.getElementById('bymm-sort').addEventListener('change', function(e) {
     sortOrder = e.target.value;
     currentPage = 1;
-    applyFilters();
+    applySort();
   });
-  document.getElementById('bymm-apply-price').addEventListener('click', function() {
-    minPrice = document.getElementById('price-min').value ? parseFloat(document.getElementById('price-min').value) : null;
-    maxPrice = document.getElementById('price-max').value ? parseFloat(document.getElementById('price-max').value) : null;
-    currentPage = 1;
-    applyFilters();
-  });
+
   document.getElementById('bymm-show-more').addEventListener('click', function() {
     currentPage++;
     renderGrid();
@@ -616,22 +346,21 @@
     var supabaseProducts = await res.json();
     if (!supabaseProducts || supabaseProducts.length === 0) return [];
 
-    // Fetch all product details from Shopify in parallel
     var fetchPromises = supabaseProducts
       .filter(function(p) { return p.product_handle; })
       .map(function(sp) {
         return fetch('/products/' + sp.product_handle + '.js')
           .then(function(r) { return r.json(); })
-          .then(function(shopData) {
+          .then(function(d) {
             return {
-              product_title: shopData.title,
-              product_handle: shopData.handle,
-              vendor: shopData.vendor,
-              product_type: shopData.type,
-              tags: shopData.tags || [],
-              price: shopData.price ? (shopData.price / 100).toFixed(2) : null,
-              image_url: shopData.featured_image,
-              available: shopData.available,
+              product_title: d.title,
+              product_handle: d.handle,
+              vendor: d.vendor,
+              product_type: d.type,
+              tags: d.tags || [],
+              price: d.price ? (d.price / 100).toFixed(2) : null,
+              image_url: d.featured_image,
+              available: d.available,
               shopify_product_id: sp.shopify_product_id
             };
           })
@@ -653,16 +382,15 @@
 
     try {
       var fittedData = await loadFittedProducts();
-
       loadingEl.style.display = 'none';
 
       if (!fittedData || fittedData.length === 0) {
         noResultsEl.style.display = 'block';
       } else {
-        layoutEl.style.display = 'grid';
+        layoutEl.style.display = 'block';
         allProducts = fittedData;
-        buildFilters(allProducts);
-        applyFilters();
+        filteredProducts = allProducts.slice();
+        renderGrid();
       }
 
     } catch (err) {
