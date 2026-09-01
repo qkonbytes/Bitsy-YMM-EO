@@ -670,29 +670,29 @@
     var supabaseProducts = await res.json();
     if (!supabaseProducts || supabaseProducts.length === 0) return [];
 
-    // Fetch full product details from Shopify storefront
-    var products = [];
-    for (var i = 0; i < supabaseProducts.length; i++) {
-      var handle = supabaseProducts[i].product_handle;
-      if (!handle) continue;
-      try {
-        var shopRes = await fetch('/products/' + handle + '.js');
-        var shopData = await shopRes.json();
-        products.push({
-          product_title: shopData.title,
-          product_handle: shopData.handle,
-          vendor: shopData.vendor,
-          product_type: shopData.type,
-          tags: shopData.tags,
-          price: shopData.price ? (shopData.price / 100).toFixed(2) : null,
-          image_url: shopData.featured_image,
-          available: shopData.available,
-          shopify_product_id: supabaseProducts[i].shopify_product_id
-        });
-      } catch (err) {
-        console.error('Failed to fetch product:', handle, err);
-      }
-    }
+    // Fetch all product details from Shopify in parallel
+    var fetchPromises = supabaseProducts
+      .filter(function(p) { return p.product_handle; })
+      .map(function(sp) {
+        return fetch('/products/' + sp.product_handle + '.js')
+          .then(function(r) { return r.json(); })
+          .then(function(shopData) {
+            return {
+              product_title: shopData.title,
+              product_handle: shopData.handle,
+              vendor: shopData.vendor,
+              product_type: shopData.type,
+              tags: shopData.tags || [],
+              price: shopData.price ? (shopData.price / 100).toFixed(2) : null,
+              image_url: shopData.featured_image,
+              available: shopData.available,
+              shopify_product_id: sp.shopify_product_id
+            };
+          })
+          .catch(function() { return null; });
+      });
+
+    var products = (await Promise.all(fetchPromises)).filter(function(p) { return p !== null; });
     return products;
   }
 
