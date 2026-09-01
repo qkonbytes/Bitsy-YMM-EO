@@ -1,6 +1,6 @@
 {% schema %}
 {
-  "name": "YMM Results V2",
+  "name": "YMM Results v2",
   "target": "section",
   "settings": [
     {
@@ -27,9 +27,12 @@
       <h1 class="bymm-title" id="bymm-title">Loading...</h1>
     </div>
     <div class="bymm-header-actions">
-  	<a href="/pages/universal-products" class="bymm-universal-btn">Universal Products</a>
-  	<a href="/" class="bymm-change">Change vehicle</a>
-	</div>
+      <div class="bymm-toggle-btns">
+        <button class="bymm-toggle-btn active" id="btn-fitment">Fitment Items</button>
+        <button class="bymm-toggle-btn" id="btn-universal">Universal Products</button>
+      </div>
+      <a href="/" class="bymm-change">Change vehicle</a>
+    </div>
   </div>
 
   <div id="bymm-loading" class="bymm-loading">
@@ -59,6 +62,11 @@
       <button id="bymm-show-more" class="bymm-show-more-btn">
         Show More <span id="bymm-remaining"></span>
       </button>
+    </div>
+
+    <div id="bymm-universal-grid" class="bymm-grid" style="display:none;"></div>
+    <div id="bymm-universal-empty" class="bymm-empty" style="display:none;">
+      <p>No universal products found.</p>
     </div>
   </div>
 
@@ -97,25 +105,34 @@
     font-weight: 800;
     margin: 0;
   }
-  .bymm-change {
-    font-size: 0.85rem;
-    color: {{ block.settings.accent_color }};
-    text-decoration: underline;
-    white-space: nowrap;
-    margin-left: 1rem;
-  }
   .bymm-header-actions {
     display: flex;
     gap: 1rem;
     align-items: center;
   }
-  .bymm-universal-btn {
+  .bymm-toggle-btns {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .bymm-toggle-btn {
     font-size: 0.85rem;
-    color: white;
-    background: {{ block.settings.button_color }};
     padding: 0.5rem 1rem;
     border-radius: 4px;
-    text-decoration: none;
+    border: 2px solid #111;
+    background: white;
+    color: #111;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .bymm-toggle-btn.active {
+    background: #111;
+    color: white;
+  }
+  .bymm-change {
+    font-size: 0.85rem;
+    color: {{ block.settings.accent_color }};
+    text-decoration: underline;
     white-space: nowrap;
   }
   .bymm-loading {
@@ -150,7 +167,7 @@
   }
   .bymm-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1.25rem;
     margin-bottom: 2rem;
   }
@@ -249,6 +266,8 @@
   @media (max-width: 768px) {
     .bymm-grid { grid-template-columns: repeat(2, 1fr); }
     .bymm-title { font-size: 1.2rem; }
+    .bymm-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .bymm-header-actions { flex-wrap: wrap; }
   }
 </style>
 
@@ -272,22 +291,26 @@
   var sortOrder = 'default';
   var currentPage = 1;
   var PAGE_SIZE = 20;
+  var universalLoaded = false;
+  var universalProducts = [];
 
-  var titleEl     = document.getElementById('bymm-title');
-  var loadingEl   = document.getElementById('bymm-loading');
-  var layoutEl    = document.getElementById('bymm-layout');
-  var gridEl      = document.getElementById('bymm-grid');
-  var emptyEl     = document.getElementById('bymm-empty');
-  var noResultsEl = document.getElementById('bymm-no-results');
-  var countEl     = document.getElementById('bymm-count');
+  var titleEl      = document.getElementById('bymm-title');
+  var loadingEl    = document.getElementById('bymm-loading');
+  var layoutEl     = document.getElementById('bymm-layout');
+  var gridEl       = document.getElementById('bymm-grid');
+  var emptyEl      = document.getElementById('bymm-empty');
+  var noResultsEl  = document.getElementById('bymm-no-results');
+  var countEl      = document.getElementById('bymm-count');
   var showMoreWrap = document.getElementById('bymm-show-more-wrap');
-  var remainingEl = document.getElementById('bymm-remaining');
+  var remainingEl  = document.getElementById('bymm-remaining');
+  var uniGrid      = document.getElementById('bymm-universal-grid');
+  var uniEmpty     = document.getElementById('bymm-universal-empty');
 
   function buildCard(p) {
-    var img    = p.image_url || '';
-    var title  = p.product_title || 'Product';
+    var img    = p.image_url || p.featured_image || '';
+    var title  = p.product_title || p.title || 'Product';
     var price  = p.price ? 'R ' + parseFloat(p.price).toFixed(2) : '';
-    var handle = p.product_handle || '';
+    var handle = p.product_handle || p.handle || '';
     var vendor = p.vendor || '';
 
     return '<div class="bymm-card">' +
@@ -309,9 +332,9 @@
     } else if (sortOrder === 'price-desc') {
       result.sort(function(a, b) { return parseFloat(b.price || 0) - parseFloat(a.price || 0); });
     } else if (sortOrder === 'title-asc') {
-      result.sort(function(a, b) { return (a.product_title || '').localeCompare(b.product_title || ''); });
+      result.sort(function(a, b) { return (a.product_title || a.title || '').localeCompare(b.product_title || b.title || ''); });
     } else if (sortOrder === 'title-desc') {
-      result.sort(function(a, b) { return (b.product_title || '').localeCompare(a.product_title || ''); });
+      result.sort(function(a, b) { return (b.product_title || b.title || '').localeCompare(a.product_title || a.title || ''); });
     }
     filteredProducts = result;
     renderGrid();
@@ -339,6 +362,42 @@
       }
     }
   }
+
+  document.getElementById('btn-fitment').addEventListener('click', function() {
+    document.getElementById('btn-fitment').classList.add('active');
+    document.getElementById('btn-universal').classList.remove('active');
+    gridEl.style.display = 'grid';
+    emptyEl.style.display = filteredProducts.length === 0 ? 'block' : 'none';
+    showMoreWrap.style.display = filteredProducts.length > PAGE_SIZE ? 'block' : 'none';
+    uniGrid.style.display = 'none';
+    uniEmpty.style.display = 'none';
+    countEl.textContent = filteredProducts.length + ' part(s) found';
+  });
+
+  document.getElementById('btn-universal').addEventListener('click', async function() {
+    document.getElementById('btn-universal').classList.add('active');
+    document.getElementById('btn-fitment').classList.remove('active');
+    gridEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    showMoreWrap.style.display = 'none';
+
+    if (!universalLoaded) {
+      countEl.textContent = 'Loading universal products...';
+      universalProducts = await loadUniversalProducts();
+      universalLoaded = true;
+    }
+
+    if (universalProducts.length === 0) {
+      uniGrid.style.display = 'none';
+      uniEmpty.style.display = 'block';
+      countEl.textContent = '0 part(s) found';
+    } else {
+      uniGrid.style.display = 'grid';
+      uniEmpty.style.display = 'none';
+      uniGrid.innerHTML = universalProducts.map(buildCard).join('');
+      countEl.textContent = universalProducts.length + ' part(s) found';
+    }
+  });
 
   document.getElementById('bymm-sort').addEventListener('change', function(e) {
     sortOrder = e.target.value;
@@ -386,6 +445,20 @@
 
     var products = (await Promise.all(fetchPromises)).filter(function(p) { return p !== null; });
     return products;
+  }
+
+  async function loadUniversalProducts() {
+    try {
+      var res = await fetch(
+        SUPABASE_URL + '/rest/v1/rpc/get_universal_products',
+        { method: 'POST', headers: HEADERS, body: '{}' }
+      );
+      var data = await res.json();
+      return data || [];
+    } catch (err) {
+      console.error('Universal products error:', err);
+      return [];
+    }
   }
 
   async function init() {
