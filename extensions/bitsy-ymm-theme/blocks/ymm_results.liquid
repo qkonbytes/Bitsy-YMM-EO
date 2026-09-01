@@ -447,6 +447,8 @@
     return products;
   }
 
+  var UNIVERSAL_EXCLUDE_KEYWORDS = ['brake pad', 'cv boot', 'brake pads', 'cv boots', 'Fork Seal', 'Fork Seals', 'Dust Kit', 'Transmission', 'Seal Kit'];
+
   async function loadUniversalProducts() {
     try {
       var res = await fetch(
@@ -454,7 +456,15 @@
         { method: 'POST', headers: HEADERS, body: '{}' }
       );
       var data = await res.json();
-      return data || [];
+      if (!data) return [];
+
+      // Filter out excluded products by title keyword
+      return data.filter(function(p) {
+        var title = (p.product_title || '').toLowerCase();
+        return !UNIVERSAL_EXCLUDE_KEYWORDS.some(function(keyword) {
+          return title.indexOf(keyword) !== -1;
+        });
+      });
     } catch (err) {
       console.error('Universal products error:', err);
       return [];
