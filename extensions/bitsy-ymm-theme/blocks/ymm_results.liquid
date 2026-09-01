@@ -36,59 +36,7 @@
 
   <div class="bymm-layout" id="bymm-layout" style="display:none;">
 
-    <aside class="bymm-filters">
-      <div class="bymm-filter-header">
-        <span>Filters</span>
-        <button class="bymm-clear-btn" id="bymm-clear">Clear all</button>
-      </div>
-
-      <div class="bymm-filter-group">
-        <button class="bymm-filter-title open" data-target="filter-vendor">
-          Vendor <span class="bymm-chevron">&#9660;</span>
-        </button>
-        <div class="bymm-filter-body open" id="filter-vendor"></div>
-      </div>
-
-      <div class="bymm-filter-group">
-        <button class="bymm-filter-title open" data-target="filter-type">
-          Product Type <span class="bymm-chevron">&#9660;</span>
-        </button>
-        <div class="bymm-filter-body open" id="filter-type"></div>
-      </div>
-
-      <div class="bymm-filter-group">
-        <button class="bymm-filter-title open" data-target="filter-price">
-          Price <span class="bymm-chevron">&#9660;</span>
-        </button>
-        <div class="bymm-filter-body open" id="filter-price">
-          <div class="bymm-price-inputs">
-            <input type="number" id="price-min" placeholder="Min" class="bymm-price-input">
-            <span>—</span>
-            <input type="number" id="price-max" placeholder="Max" class="bymm-price-input">
-          </div>
-          <button class="bymm-apply-price" id="bymm-apply-price">Apply</button>
-        </div>
-      </div>
-
-      <div class="bymm-filter-group">
-        <label class="bymm-toggle-label">
-          <input type="checkbox" id="filter-instock" class="bymm-toggle-input">
-          <span class="bymm-toggle-track">
-            <span class="bymm-toggle-thumb"></span>
-          </span>
-          In stock only
-        </label>
-      </div>
-
-      <div class="bymm-filter-group">
-        <button class="bymm-filter-title open" data-target="filter-vehicle">
-          Vehicle <span class="bymm-chevron">&#9660;</span>
-        </button>
-        <div class="bymm-filter-body open" id="filter-vehicle"></div>
-      </div>
-
-    </aside>
-
+   
     <div class="bymm-product-area">
       <div class="bymm-sort-bar">
         <span class="bymm-count" id="bymm-count"></span>
@@ -173,12 +121,10 @@
     margin: 0 auto 1rem;
   }
   @keyframes bymm-spin { to { transform: rotate(360deg); } }
-  .bymm-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 2rem;
-    align-items: start;
+.bymm-layout {
+    display: block;
   }
+
   .bymm-filters {
     border: 1px solid #e5e5e5;
     border-radius: 8px;
