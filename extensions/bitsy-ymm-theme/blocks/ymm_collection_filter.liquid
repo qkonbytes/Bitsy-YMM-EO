@@ -22,6 +22,27 @@
       "default": "#e63e2f"
     },
     {
+      "type": "range",
+      "id": "max_width",
+      "label": "Width %",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "default": 100,
+      "unit": "%"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
       "type": "text",
       "id": "product_card_selector",
       "label": "Product Card CSS Selector",
@@ -40,7 +61,7 @@
 {% endschema %}
 
 <div class="ymm-cf-wrap" id="ymm-cf-wrap">
-  <div class="ymm-cf-header">
+  <div class="ymm-cf-inner">
     <span class="ymm-cf-heading">{{ block.settings.heading }}</span>
     <div class="ymm-cf-dropdowns">
       <select id="ymm-cf-make" class="ymm-cf-select">
@@ -71,8 +92,19 @@
     border: 1px solid #e5e5e5;
     border-radius: 6px;
     margin-bottom: 1.5rem;
+    max-width: {{ block.settings.max_width }}%;
+    {% if block.settings.alignment == 'center' %}
+      margin-left: auto;
+      margin-right: auto;
+    {% elsif block.settings.alignment == 'right' %}
+      margin-left: auto;
+      margin-right: 0;
+    {% else %}
+      margin-left: 0;
+      margin-right: auto;
+    {% endif %}
   }
-  .ymm-cf-header {
+  .ymm-cf-inner {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -141,8 +173,34 @@
     display: none !important;
   }
   @media (max-width: 768px) {
-    .ymm-cf-header { flex-direction: column; align-items: flex-start; }
-    .ymm-cf-select { min-width: 100px; }
+    .ymm-cf-wrap {
+      max-width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .ymm-cf-inner {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .ymm-cf-heading {
+      text-align: center;
+    }
+    .ymm-cf-dropdowns {
+      flex-direction: column;
+    }
+    .ymm-cf-select {
+      width: 100%;
+      min-width: unset;
+    }
+    .ymm-cf-btn {
+      width: 100%;
+      padding: 0.75rem;
+    }
+    .ymm-cf-reset-btn {
+      width: 100%;
+      text-align: center;
+      padding: 0.75rem;
+    }
   }
 </style>
 
@@ -158,14 +216,13 @@
     'Content-Type': 'application/json'
   };
 
-  var cfMake  = document.getElementById('ymm-cf-make');
-  var cfModel = document.getElementById('ymm-cf-model');
-  var cfYear  = document.getElementById('ymm-cf-year');
-  var cfBtn   = document.getElementById('ymm-cf-filter');
-  var cfReset = document.getElementById('ymm-cf-reset');
+  var cfMake   = document.getElementById('ymm-cf-make');
+  var cfModel  = document.getElementById('ymm-cf-model');
+  var cfYear   = document.getElementById('ymm-cf-year');
+  var cfBtn    = document.getElementById('ymm-cf-filter');
+  var cfReset  = document.getElementById('ymm-cf-reset');
   var cfStatus = document.getElementById('ymm-cf-status');
 
-  // Load makes
   fetch(YMM_CF_SUPABASE_URL + '/rest/v1/distinct_makes?select=make', { headers: YMM_CF_HEADERS })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -230,33 +287,23 @@
     cfBtn.textContent = 'Filtering...';
     cfBtn.disabled = true;
 
-    // Get fitment product IDs from Supabase
     var body = '{"p_make":"' + make + '","p_model":"' + model + '","p_year":"' + year + '"}';
     var res = await fetch(
       YMM_CF_SUPABASE_URL + '/rest/v1/rpc/get_fitment_product_ids',
       { method: 'POST', headers: YMM_CF_HEADERS, body: body }
     );
     var fitmentIds = await res.json();
-    var idSet = new Set(fitmentIds || []);
+    var idSet = new Set((fitmentIds || []).map(function(id) { return String(id); }));
 
-    // Get all product cards on the page
     var cards = document.querySelectorAll(YMM_CF_CARD_SELECTOR);
     var shown = 0;
     var hidden = 0;
 
     cards.forEach(function(card) {
-      var productId = card.getAttribute(YMM_CF_ID_ATTR);
-      if (!productId) {
-        // Try to find product ID from a link or data attribute
-        var link = card.querySelector('a[href*="/products/"]');
-        if (link) {
-          var handle = link.href.split('/products/')[1];
-          if (handle) handle = handle.split('?')[0].split('#')[0];
-          productId = card.getAttribute('data-product-id') ||
+      var productId = card.getAttribute(YMM_CF_ID_ATTR) ||
+                      card.getAttribute('data-product-id') ||
                       card.getAttribute('data-id') ||
                       card.getAttribute('data-product');
-        }
-      }
 
       if (productId && idSet.has(String(productId))) {
         card.classList.remove('ymm-cf-hidden');
@@ -275,7 +322,6 @@
   });
 
   cfReset.addEventListener('click', function() {
-    // Show all products
     var cards = document.querySelectorAll(YMM_CF_CARD_SELECTOR);
     cards.forEach(function(card) {
       card.classList.remove('ymm-cf-hidden');
