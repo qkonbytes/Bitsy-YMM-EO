@@ -158,6 +158,16 @@
   .ymm-cf-hidden {
     display: none !important;
   }
+  .ymm-cf-loading-bar {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #999;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #e5e5e5;
+    display: none;
+  }
   @media (max-width: 768px) {
     .ymm-cf-wrap {
       max-width: 100%;
@@ -207,6 +217,56 @@
   var cfReset  = document.getElementById('ymm-cf-reset');
   var cfStatus = document.getElementById('ymm-cf-status');
 
+  // Get collection handle from URL
+  var collectionHandle = window.location.pathname.split('/collections/')[1];
+  if (collectionHandle) collectionHandle = collectionHandle.split('/')[0].split('?')[0];
+
+  // Store all loaded products
+  var allCollectionHandles = null;
+
+  // Load all collection products via AJAX across all pages
+  async function loadAllCollectionProducts() {
+    if (allCollectionHandles) return allCollectionHandles;
+    if (!collectionHandle) return new Set();
+
+    var handles = new Set();
+    var page = 1;
+    var hasMore = true;
+
+    cfStatus.style.display = 'block';
+    cfStatus.textContent = 'Loading all products...';
+
+    while (hasMore) {
+      try {
+        var res = await fetch(
+          '/collections/' + collectionHandle + '/products.json?limit=250&page=' + page
+        );
+        var data = await res.json();
+        var products = data.products || [];
+
+        products.forEach(function(p) {
+          handles.add(p.handle);
+        });
+
+        cfStatus.textContent = 'Loading products... ' + handles.size + ' found';
+
+        if (products.length < 250) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      } catch (err) {
+        console.error('Error loading collection page', page, err);
+        hasMore = false;
+      }
+    }
+
+    allCollectionHandles = handles;
+    cfStatus.style.display = 'none';
+    return handles;
+  }
+
+  // Load makes
   fetch(YMM_CF_SUPABASE_URL + '/rest/v1/distinct_makes?select=make', { headers: YMM_CF_HEADERS })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -271,6 +331,10 @@
     cfBtn.textContent = 'Filtering...';
     cfBtn.disabled = true;
 
+    // Load all collection products if not already loaded
+    var collectionHandles = await loadAllCollectionProducts();
+
+    // Get fitment products from Supabase
     var body = '{"p_make":"' + make + '","p_model":"' + model + '","p_year":"' + year + '"}';
     var res = await fetch(
       YMM_CF_SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
@@ -278,47 +342,105 @@
     );
     var fitmentProducts = await res.json();
 
-    // Build set of valid product handles
-    var handleSet = new Set((fitmentProducts || []).map(function(p) {
+    // Build set of handles that fit AND are in this collection
+    var fitHandles = new Set((fitmentProducts || []).map(function(p) {
       return p.product_handle;
     }));
 
-    // Get all product cards on the page
+    // Intersection — only show products that are in collection AND fit the vehicle
+    var validHandles = new Set();
+    fitHandles.forEach(function(h) {
+      if (collectionHandles.has(h)) validHandles.add(h);
+    });
+
+    // Now rebuild the product grid with only fitting products
+    var grid = document.querySelector('.products-grid, .collection-products, .grid, [class*="product-grid"]');
     var cards = document.querySelectorAll('.product-card');
     var shown = 0;
     var hidden = 0;
 
     cards.forEach(function(card) {
-      // Find product handle from any link in the card
       var link = card.querySelector('a[href*="/products/"]');
       var handle = null;
       if (link) {
         var href = link.getAttribute('href');
-        var match = href.match(/\/products\/([^?#]+)/);
+        var match = href.match(/\/products\/([^?#\/]+)/);
         if (match) handle = match[1];
       }
 
-      if (handle && handleSet.has(handle)) {
-        card.classList.remove('ymm-cf-hidden');
+      var wrapper = card.parentElement || card;
+
+      if (handle && validHandles.has(handle)) {
+        wrapper.classList.remove('ymm-cf-hidden');
         shown++;
       } else if (handle) {
-        card.classList.add('ymm-cf-hidden');
+        wrapper.classList.add('ymm-cf-hidden');
         hidden++;
       }
     });
 
+    // If there are products not in DOM (other pages) inject them
+    var missingHandles = [];
+    validHandles.forEach(function(h) {
+      var found = false;
+      cards.forEach(function(card) {
+        var link = card.querySelector('a[href*="/products/' + h + '"]');
+        if (link) found = true;
+      });
+      if (!found) missingHandles.push(h);
+    });
+
+    // Fetch and inject missing products
+    if (missingHandles.length > 0 && grid) {
+      var fetchPromises = missingHandles.map(function(handle) {
+        return fetch('/products/' + handle + '.js')
+          .then(function(r) { return r.json(); })
+          .then(function(p) {
+            var img = p.featured_image || '';
+            var price = p.price ? 'R ' + (p.price / 100).toFixed(2) : '';
+            var li = document.createElement('div');
+            li.className = 'ymm-cf-injected';
+            li.innerHTML = '<div class="product-card">' +
+              '<div class="product-card__image-wr">' +
+                '<a href="/products/' + p.handle + '" class="product-card__image">' +
+                  (img ? '<img src="' + img + '" alt="' + p.title + '" loading="lazy">' : '') +
+                '</a>' +
+              '</div>' +
+              '<div class="product-card__info">' +
+                '<div class="product-card__price">' + price + '</div>' +
+                '<a href="/products/' + p.handle + '" class="product-card__name">' + p.title + '</a>' +
+              '</div>' +
+            '</div>';
+            return li;
+          })
+          .catch(function() { return null; });
+      });
+
+      var injected = (await Promise.all(fetchPromises)).filter(function(el) { return el !== null; });
+      injected.forEach(function(el) {
+        grid.appendChild(el);
+        shown++;
+      });
+    }
+
     cfStatus.style.display = 'block';
-    cfStatus.textContent = 'Showing ' + shown + ' parts for ' + year + ' ' + make + ' ' + model + ' (' + hidden + ' hidden)';
+    cfStatus.textContent = 'Showing ' + shown + ' parts for ' + year + ' ' + make + ' ' + model + ' (' + hidden + ' hidden on this page)';
     cfReset.style.display = 'inline-block';
     cfBtn.textContent = 'Filter';
     cfBtn.disabled = false;
   });
 
   cfReset.addEventListener('click', function() {
+    // Remove injected products
+    document.querySelectorAll('.ymm-cf-injected').forEach(function(el) { el.remove(); });
+
+    // Show all original cards
     var cards = document.querySelectorAll('.product-card');
     cards.forEach(function(card) {
-      card.classList.remove('ymm-cf-hidden');
+      var wrapper = card.parentElement || card;
+      wrapper.classList.remove('ymm-cf-hidden');
     });
+
     cfStatus.style.display = 'none';
     cfReset.style.display = 'none';
     cfMake.value = '';
@@ -327,5 +449,8 @@
     cfModel.disabled = true;
     cfYear.disabled = true;
     cfBtn.disabled = true;
+
+    // Reset cached collection handles so it reloads next time
+    allCollectionHandles = null;
   });
 </script>
