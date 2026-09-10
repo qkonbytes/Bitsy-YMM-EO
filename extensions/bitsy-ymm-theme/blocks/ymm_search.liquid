@@ -30,6 +30,17 @@
       "step": 5,
       "default": 100,
       "unit": "%"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
     }
   ]
 }
@@ -68,6 +79,16 @@
     border-radius: 6px;
     margin-bottom: 1.5rem;
     max-width: {{ block.settings.max_width }}%;
+    {% if block.settings.alignment == 'center' %}
+      margin-left: auto;
+      margin-right: auto;
+    {% elsif block.settings.alignment == 'right' %}
+      margin-left: auto;
+      margin-right: 0;
+    {% else %}
+      margin-left: 0;
+      margin-right: auto;
+    {% endif %}
   }
   .bitsy-ymm-inner {
     display: flex;
@@ -117,6 +138,8 @@
   @media (max-width: 768px) {
     .bitsy-ymm-search {
       max-width: 100%;
+      margin-left: 0;
+      margin-right: 0;
     }
     .bitsy-ymm-inner {
       flex-direction: column;
