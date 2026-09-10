@@ -14,101 +14,99 @@
       "id": "button_color",
       "label": "Button Color",
       "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent Color",
+      "default": "#e63e2f"
     }
   ]
 }
 {% endschema %}
 
 <div class="bitsy-ymm-search" id="bitsy-ymm-search">
-  <h2 class="bitsy-ymm-heading">{{ block.settings.heading }}</h2>
-
-  <div class="bitsy-ymm-dropdowns">
-    <div class="bitsy-ymm-field">
-      <label for="bitsy-make">Make</label>
-      <select id="bitsy-make" name="make">
+  <div class="bitsy-ymm-inner">
+    <span class="bitsy-ymm-heading">{{ block.settings.heading }}</span>
+    <div class="bitsy-ymm-dropdowns">
+      <select id="bitsy-make" class="bitsy-ymm-select">
         <option value="">Select Make</option>
       </select>
-    </div>
-
-    <div class="bitsy-ymm-field">
-      <label for="bitsy-model">Model</label>
-      <select id="bitsy-model" name="model" disabled>
+      <select id="bitsy-model" class="bitsy-ymm-select" disabled>
         <option value="">Select Model</option>
       </select>
-    </div>
-
-    <div class="bitsy-ymm-field">
-      <label for="bitsy-year">Year</label>
-      <select id="bitsy-year" name="year" disabled>
+      <select id="bitsy-year" class="bitsy-ymm-select" disabled>
         <option value="">Select Year</option>
       </select>
+      <button
+        id="bitsy-search-btn"
+        class="bitsy-ymm-btn"
+        style="background: {{ block.settings.button_color }}; color: white;"
+        disabled
+      >
+        Find Parts
+      </button>
     </div>
   </div>
-
-  <button
-    id="bitsy-search-btn"
-    class="bitsy-ymm-btn"
-    style="background-color: {{ block.settings.button_color }};"
-    disabled
-  >
-    Find Parts
-  </button>
 </div>
 
 <style>
   .bitsy-ymm-search {
-    padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 1rem;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+  }
+  .bitsy-ymm-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
   .bitsy-ymm-heading {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
   }
   .bitsy-ymm-dropdowns {
     display: flex;
-    gap: 1rem;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    margin-bottom: 1rem;
-  }
-  .bitsy-ymm-field {
-    display: flex;
-    flex-direction: column;
+    align-items: center;
     flex: 1;
-    min-width: 150px;
   }
-  .bitsy-ymm-field label {
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-    font-weight: 600;
-  }
-  .bitsy-ymm-field select {
-    padding: 0.6rem;
-    border: 1px solid #ccc;
+  .bitsy-ymm-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 1rem;
+    font-size: 0.9rem;
     background: white;
+    cursor: pointer;
+    flex: 1;
+    min-width: 120px;
   }
-  .bitsy-ymm-field select:disabled {
+  .bitsy-ymm-select:disabled {
     background: #f5f5f5;
     cursor: not-allowed;
   }
   .bitsy-ymm-btn {
-    width: 100%;
-    padding: 0.85rem;
-    color: white;
+    padding: 0.5rem 1.25rem;
     border: none;
     border-radius: 4px;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 0.5rem;
+    white-space: nowrap;
   }
   .bitsy-ymm-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+  @media (max-width: 768px) {
+    .bitsy-ymm-inner { flex-direction: column; align-items: flex-start; }
+    .bitsy-ymm-select { min-width: 100px; }
+  }
 </style>
 
 <script src="{{ 'ymm.js' | asset_url }}" defer></script>
-
