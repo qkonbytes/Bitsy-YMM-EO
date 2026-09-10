@@ -41,20 +41,6 @@
         { "value": "right", "label": "Right" }
       ],
       "default": "left"
-    },
-    {
-      "type": "text",
-      "id": "product_card_selector",
-      "label": "Product Card CSS Selector",
-      "default": ".product-item",
-      "info": "CSS selector for product cards in this theme. Common values: .product-item, .grid__item, .product-card, li.grid__item"
-    },
-    {
-      "type": "text",
-      "id": "product_id_attribute",
-      "label": "Product ID Attribute",
-      "default": "data-product-id",
-      "info": "The HTML attribute on product cards that contains the Shopify product ID"
     }
   ]
 }
@@ -207,8 +193,6 @@
 <script>
   var YMM_CF_SUPABASE_URL = 'https://mpvhnycxwntslepogfuc.supabase.co';
   var YMM_CF_ANON_KEY = 'sb_publishable_shCSxRk-MJJDWblwk9IJwQ_iCwrl3CT';
-  var YMM_CF_CARD_SELECTOR = '{{ block.settings.product_card_selector }}';
-  var YMM_CF_ID_ATTR = '{{ block.settings.product_id_attribute }}';
 
   var YMM_CF_HEADERS = {
     apikey: YMM_CF_ANON_KEY,
@@ -289,26 +273,35 @@
 
     var body = '{"p_make":"' + make + '","p_model":"' + model + '","p_year":"' + year + '"}';
     var res = await fetch(
-      YMM_CF_SUPABASE_URL + '/rest/v1/rpc/get_fitment_product_ids',
+      YMM_CF_SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
       { method: 'POST', headers: YMM_CF_HEADERS, body: body }
     );
-    var fitmentIds = await res.json();
-    var idSet = new Set((fitmentIds || []).map(function(id) { return String(id); }));
+    var fitmentProducts = await res.json();
 
-    var cards = document.querySelectorAll(YMM_CF_CARD_SELECTOR);
+    // Build set of valid product handles
+    var handleSet = new Set((fitmentProducts || []).map(function(p) {
+      return p.product_handle;
+    }));
+
+    // Get all product cards on the page
+    var cards = document.querySelectorAll('.product-card');
     var shown = 0;
     var hidden = 0;
 
     cards.forEach(function(card) {
-      var productId = card.getAttribute(YMM_CF_ID_ATTR) ||
-                      card.getAttribute('data-product-id') ||
-                      card.getAttribute('data-id') ||
-                      card.getAttribute('data-product');
+      // Find product handle from any link in the card
+      var link = card.querySelector('a[href*="/products/"]');
+      var handle = null;
+      if (link) {
+        var href = link.getAttribute('href');
+        var match = href.match(/\/products\/([^?#]+)/);
+        if (match) handle = match[1];
+      }
 
-      if (productId && idSet.has(String(productId))) {
+      if (handle && handleSet.has(handle)) {
         card.classList.remove('ymm-cf-hidden');
         shown++;
-      } else if (productId) {
+      } else if (handle) {
         card.classList.add('ymm-cf-hidden');
         hidden++;
       }
@@ -322,7 +315,7 @@
   });
 
   cfReset.addEventListener('click', function() {
-    var cards = document.querySelectorAll(YMM_CF_CARD_SELECTOR);
+    var cards = document.querySelectorAll('.product-card');
     cards.forEach(function(card) {
       card.classList.remove('ymm-cf-hidden');
     });
