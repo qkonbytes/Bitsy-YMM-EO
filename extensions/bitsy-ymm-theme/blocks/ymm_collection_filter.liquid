@@ -354,7 +354,7 @@
     });
 
     // Now rebuild the product grid with only fitting products
-    var grid = document.querySelector('.products-grid, .collection-products, .grid, [class*="product-grid"]');
+    var grid = document.querySelector('.product-grid');
     var cards = document.querySelectorAll('.product-card');
     var shown = 0;
     var hidden = 0;
@@ -399,7 +399,7 @@
             var img = p.featured_image || '';
             var price = p.price ? 'R ' + (p.price / 100).toFixed(2) : '';
             var li = document.createElement('div');
-            li.className = 'ymm-cf-injected';
+            li.className = 'grid__item js-col col-12 col-sm-6 col-6 col-lg-3 ymm-cf-injected';
             li.innerHTML = '<div class="product-card">' +
               '<div class="product-card__image-wr">' +
                 '<a href="/products/' + p.handle + '" class="product-card__image">' +
