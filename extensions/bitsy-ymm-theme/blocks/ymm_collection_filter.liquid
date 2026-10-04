@@ -224,7 +224,14 @@
   var currentPath = window.location.pathname.toLowerCase();
   var collectionTitle = ((document.querySelector('h1') || {}).textContent || '').toLowerCase();
 
-  var isExcluded = EXCLUDE_KEYWORDS.some(function(keyword) {
+  var INCLUDE_KEYWORDS = ['oil-filter', 'oil filter'];
+
+  var isIncluded = INCLUDE_KEYWORDS.some(function(keyword) {
+    return currentPath.indexOf(keyword) !== -1 ||
+           collectionTitle.indexOf(keyword) !== -1;
+  });
+
+  var isExcluded = !isIncluded && EXCLUDE_KEYWORDS.some(function(keyword) {
     var slug = keyword.replace(/ /g, '-');
     return currentPath.indexOf(slug) !== -1 ||
            currentPath.indexOf(keyword) !== -1 ||
