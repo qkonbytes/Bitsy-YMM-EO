@@ -11,15 +11,9 @@
     },
     {
       "type": "color",
-      "id": "button_color",
-      "label": "Button Color",
-      "default": "#111111"
-    },
-    {
-      "type": "color",
       "id": "accent_color",
       "label": "Accent Color",
-      "default": "#e63e2f"
+      "default": "#c0392b"
     },
     {
       "type": "range",
@@ -45,7 +39,7 @@
     {
       "type": "checkbox",
       "id": "enabled",
-      "label": "Enable YMM Filter for this collection",
+      "label": "Enable YMM Filter",
       "default": true
     }
   ]
@@ -65,13 +59,8 @@
       <select id="ymm-cf-year" class="ymm-cf-select" disabled>
         <option value="">Select Year</option>
       </select>
-      <button id="ymm-cf-filter" class="ymm-cf-btn" disabled
-        style="background: {{ block.settings.button_color }}; color: white;">
-        Filter
-      </button>
-      <button id="ymm-cf-reset" class="ymm-cf-reset-btn" style="display:none;">
-        Clear filter
-      </button>
+      <button id="ymm-cf-filter" class="ymm-cf-btn" disabled>Filter</button>
+      <button id="ymm-cf-reset" class="ymm-cf-reset-btn" style="display:none;">Clear filter</button>
     </div>
   </div>
   <div id="ymm-cf-status" class="ymm-cf-status" style="display:none;"></div>
@@ -79,10 +68,10 @@
 
 <style>
   .ymm-cf-wrap {
-    padding: 1rem;
-    background: #f9f9f9;
-    border: 1px solid #e5e5e5;
-    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    background: #1a1a1a;
+    border: 1px solid {{ block.settings.accent_color }};
+    border-radius: 8px;
     margin-bottom: 1.5rem;
     max-width: {{ block.settings.max_width }}%;
     {% if block.settings.alignment == 'center' %}
@@ -103,9 +92,10 @@
     flex-wrap: wrap;
   }
   .ymm-cf-heading {
-    font-weight: 700;
-    font-size: 0.95rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     white-space: nowrap;
+    color: #ffffff;
   }
   .ymm-cf-dropdowns {
     display: flex;
@@ -115,51 +105,72 @@
     flex: 1;
   }
   .ymm-cf-select {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background: white;
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    border: 1px solid #3a3a3a;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    background: #2a2a2a;
+    color: #cccccc;
     cursor: pointer;
     flex: 1;
-    min-width: 120px;
+    min-width: 110px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
   }
   .ymm-cf-select:disabled {
-    background: #f5f5f5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
+  .ymm-cf-select option {
+    background: #2a2a2a;
+    color: #cccccc;
+  }
   .ymm-cf-btn {
-    padding: 0.5rem 1.25rem;
+    padding: 0.45rem 1.25rem;
     border: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-radius: 5px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    background: {{ block.settings.accent_color }};
+    color: #ffffff;
+    transition: opacity 0.15s;
   }
   .ymm-cf-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
+  .ymm-cf-btn:not(:disabled):hover {
+    opacity: 0.85;
+  }
   .ymm-cf-reset-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    background: white;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid {{ block.settings.accent_color }};
+    border-radius: 5px;
+    font-size: 0.82rem;
+    background: transparent;
     cursor: pointer;
     color: {{ block.settings.accent_color }};
-    text-decoration: underline;
     white-space: nowrap;
+    transition: opacity 0.15s;
   }
+  .ymm-cf-reset-btn:hover { opacity: 0.75; }
   .ymm-cf-status {
-    margin-top: 0.75rem;
-    font-size: 0.85rem;
-    color: #666;
-    padding: 0.5rem 0.75rem;
-    background: #fff;
-    border-radius: 4px;
-    border: 1px solid #e5e5e5;
+    margin-top: 0.6rem;
+    font-size: 0.82rem;
+    color: #aaaaaa;
+    padding: 0.5rem 0.85rem;
+    background: #111111;
+    border: 1px solid {{ block.settings.accent_color }};
+    border-left: 3px solid {{ block.settings.accent_color }};
+    border-radius: 5px;
+  }
+  .ymm-cf-status strong {
+    color: {{ block.settings.accent_color }};
   }
   .ymm-cf-hidden {
     display: none !important;
@@ -174,25 +185,11 @@
       flex-direction: column;
       align-items: stretch;
     }
-    .ymm-cf-heading {
-      text-align: center;
-    }
-    .ymm-cf-dropdowns {
-      flex-direction: column;
-    }
-    .ymm-cf-select {
-      width: 100%;
-      min-width: unset;
-    }
-    .ymm-cf-btn {
-      width: 100%;
-      padding: 0.75rem;
-    }
-    .ymm-cf-reset-btn {
-      width: 100%;
-      text-align: center;
-      padding: 0.75rem;
-    }
+    .ymm-cf-heading { text-align: center; }
+    .ymm-cf-dropdowns { flex-direction: column; }
+    .ymm-cf-select { width: 100%; min-width: unset; }
+    .ymm-cf-btn { width: 100%; padding: 0.75rem; }
+    .ymm-cf-reset-btn { width: 100%; text-align: center; padding: 0.65rem; }
   }
 </style>
 
@@ -206,32 +203,30 @@
     'Content-Type': 'application/json'
   };
 
-  // Keywords that indicate a non-fitment collection
+  var INCLUDE_KEYWORDS = ['oil-filter', 'oil filter'];
+
   var EXCLUDE_KEYWORDS = [
     'helmet', 'goggle', 'glove', 'boot', 'sock', 'pant', 'jersey',
     'chest', 'neck', 'knee', 'hydration', 'bladder', 'tool', 'bag',
-    'tyre', 'tube', 'rim-liner', 'rim liner', 'packing', 'oil',
+    'tyre', 'tube', 'rim-liner', 'rim liner', 'packing',
     'chemical', 'motorex', 'dirt-nurse', 'dirt nurse', 'bel-ray',
     'bel ray', 'motul', 'maxima', 'new-ray', 'new ray', 'toy',
     'ams-oil', 'ams oil', 'f61', 'wash', 'cleaner', 'grip',
-    'sticker', 'battery', 'batteries', 'rim', 'spring', 'hand guard',
-    'handguard', 'handlebar', 'handlebar riser', 'spoke skin', 'hour meter',
-    'fork bleeder', 'grab strap', 'fork saver', 'tie down', 'fueler',
-    'mat', 'handlebar pad'
+    'sticker', 'printing', 'battery', 'batteries', 'rim', 'spring',
+    'hand guard', 'handguard', 'handlebar', 'handlebar riser',
+    'spoke skin', 'hour meter', 'fork bleeder', 'grab strap',
+    'fork saver', 'tie down', 'fueler', 'mat', 'handlebar pad'
   ];
 
-  // Check if current collection should be excluded
   var currentPath = window.location.pathname.toLowerCase();
   var collectionTitle = ((document.querySelector('h1') || {}).textContent || '').toLowerCase();
-
-  var INCLUDE_KEYWORDS = ['oil-filter', 'oil filter'];
+  var isSearchPage = currentPath.indexOf('/search') !== -1;
 
   var isIncluded = INCLUDE_KEYWORDS.some(function(keyword) {
-    return currentPath.indexOf(keyword) !== -1 ||
-           collectionTitle.indexOf(keyword) !== -1;
+    return currentPath.indexOf(keyword) !== -1 || collectionTitle.indexOf(keyword) !== -1;
   });
 
-  var isExcluded = !isIncluded && EXCLUDE_KEYWORDS.some(function(keyword) {
+  var isExcluded = !isIncluded && !isSearchPage && EXCLUDE_KEYWORDS.some(function(keyword) {
     var slug = keyword.replace(/ /g, '-');
     return currentPath.indexOf(slug) !== -1 ||
            currentPath.indexOf(keyword) !== -1 ||
@@ -242,41 +237,57 @@
     document.getElementById('ymm-cf-wrap').style.display = 'none';
   }
 
-  // Get collection handle from URL
-  var collectionHandle = window.location.pathname.split('/collections/')[1];
-  if (collectionHandle) collectionHandle = collectionHandle.split('/')[0].split('?')[0];
+  var collectionHandle = '';
+  if (isSearchPage) {
+    collectionHandle = null;
+  } else {
+    var pathParts = currentPath.split('/collections/');
+    if (pathParts.length > 1) {
+      collectionHandle = pathParts[1].split('/')[0].split('?')[0];
+    }
+  }
 
-  // Cache all loaded product handles
   var allCollectionHandles = null;
 
-  // Load all collection products via AJAX across all pages
   async function loadAllCollectionProducts() {
     if (allCollectionHandles) return allCollectionHandles;
-    if (!collectionHandle) return new Set();
-
     var handles = new Set();
-    var page = 1;
-    var hasMore = true;
+
+    if (isSearchPage) {
+      // On search page grab all visible product cards
+      var cards = document.querySelectorAll('.product-card');
+      cards.forEach(function(card) {
+        var link = card.querySelector('a[href*="/products/"]');
+        if (link) {
+          var match = link.getAttribute('href').match(/\/products\/([^?#\/]+)/);
+          if (match) handles.add(match[1]);
+        }
+      });
+      allCollectionHandles = handles;
+      return handles;
+    }
+
+    if (!collectionHandle) return handles;
 
     cfStatus.style.display = 'block';
-    cfStatus.textContent = 'Loading all products...';
+    cfStatus.innerHTML = 'Loading products...';
 
+    var page = 1;
+    var hasMore = true;
     while (hasMore) {
       try {
         var res = await fetch('/collections/' + collectionHandle + '/products.json?limit=250&page=' + page);
         var data = await res.json();
         var products = data.products || [];
         products.forEach(function(p) { handles.add(p.handle); });
-        cfStatus.textContent = 'Loading products... ' + handles.size + ' found';
-        if (products.length < 250) { hasMore = false; } else { page++; }
-      } catch (err) {
-        console.error('Error loading collection page', page, err);
-        hasMore = false;
-      }
+        cfStatus.innerHTML = 'Loading products... ' + handles.size + ' found';
+        hasMore = products.length === 250;
+        page++;
+      } catch(e) { hasMore = false; }
     }
 
-    allCollectionHandles = handles;
     cfStatus.style.display = 'none';
+    allCollectionHandles = handles;
     return handles;
   }
 
@@ -287,7 +298,6 @@
   var cfReset  = document.getElementById('ymm-cf-reset');
   var cfStatus = document.getElementById('ymm-cf-status');
 
-  // Load makes
   fetch(YMM_CF_SUPABASE_URL + '/rest/v1/distinct_makes?select=make', { headers: YMM_CF_HEADERS })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -352,25 +362,23 @@
     cfBtn.textContent = 'Filtering...';
     cfBtn.disabled = true;
 
-    // Load all collection products
     var collectionHandles = await loadAllCollectionProducts();
 
-    // Get fitment products from Supabase
     var body = '{"p_make":"' + make + '","p_model":"' + model + '","p_year":"' + year + '"}';
     var res = await fetch(
       YMM_CF_SUPABASE_URL + '/rest/v1/rpc/get_fitment_products',
       { method: 'POST', headers: YMM_CF_HEADERS, body: body }
     );
     var fitmentProducts = await res.json();
-
-    // Build set of handles that fit AND are in this collection
     var fitHandles = new Set((fitmentProducts || []).map(function(p) { return p.product_handle; }));
-    var validHandles = new Set();
-    fitHandles.forEach(function(h) {
-      if (collectionHandles.has(h)) validHandles.add(h);
-    });
 
-    // Hide/show current page cards
+    var validHandles = isSearchPage ? fitHandles : new Set();
+    if (!isSearchPage) {
+      fitHandles.forEach(function(h) {
+        if (collectionHandles.has(h)) validHandles.add(h);
+      });
+    }
+
     var cards = document.querySelectorAll('.product-card');
     var shown = 0;
     var hidden = 0;
@@ -396,65 +404,55 @@
       }
     });
 
-    // Inject missing products from other pages
-    var grid = document.querySelector('.product-grid');
-    if (grid) {
-      var missingHandles = [];
-      validHandles.forEach(function(h) {
-        if (!domHandles.has(h)) missingHandles.push(h);
-      });
+    // Inject missing products from other pages (collection only)
+    if (!isSearchPage) {
+      var grid = document.querySelector('.product-grid');
+      if (grid) {
+        var missingHandles = [];
+        validHandles.forEach(function(h) { if (!domHandles.has(h)) missingHandles.push(h); });
 
-      if (missingHandles.length > 0) {
-        cfStatus.textContent = 'Loading ' + missingHandles.length + ' more products from other pages...';
-        var fetchPromises = missingHandles.map(function(handle) {
-          return fetch('/products/' + handle + '.js')
-            .then(function(r) { return r.json(); })
-            .then(function(p) {
-              var img = p.featured_image || '';
-              var price = p.price ? 'R ' + (p.price / 100).toFixed(2) : '';
-              var wrapper = document.createElement('div');
-              wrapper.className = 'grid__item js-col col-12 col-sm-6 col-6 col-lg-3 ymm-cf-injected';
-              wrapper.innerHTML = '<div class="product-card">' +
-                '<div class="product-card__image-wr">' +
-                  '<a href="/products/' + p.handle + '" class="product-card__image">' +
-                    (img ? '<img src="' + img + '" alt="' + p.title + '" loading="lazy" style="width:100%">' : '') +
-                  '</a>' +
-                '</div>' +
-                '<div class="product-card__info">' +
+        if (missingHandles.length > 0) {
+          cfStatus.style.display = 'block';
+          cfStatus.innerHTML = 'Loading ' + missingHandles.length + ' more products...';
+          var fetchPromises = missingHandles.map(function(handle) {
+            return fetch('/products/' + handle + '.js')
+              .then(function(r) { return r.json(); })
+              .then(function(p) {
+                var img = p.featured_image || '';
+                var price = p.price ? 'R ' + (p.price / 100).toFixed(2) : '';
+                var wrapper = document.createElement('div');
+                wrapper.className = 'grid__item js-col col-12 col-sm-6 col-6 col-lg-3 ymm-cf-injected';
+                wrapper.innerHTML = '<div class="product-card">' +
+                  '<div class="product-card__image-wr">' +
+                  '<a href="/products/' + p.handle + '">' +
+                  (img ? '<img src="' + img + '" alt="' + p.title + '" loading="lazy" style="width:100%">' : '') +
+                  '</a></div>' +
+                  '<div class="product-card__info">' +
                   '<div class="product-card__price">' + price + '</div>' +
                   '<a href="/products/' + p.handle + '" class="product-card__name">' + p.title + '</a>' +
-                '</div>' +
-              '</div>';
-              return wrapper;
-            })
-            .catch(function() { return null; });
-        });
-
-        var injected = (await Promise.all(fetchPromises)).filter(function(el) { return el !== null; });
-        injected.forEach(function(el) {
-          grid.appendChild(el);
-          shown++;
-        });
+                  '</div></div>';
+                return wrapper;
+              }).catch(function() { return null; });
+          });
+          var injected = (await Promise.all(fetchPromises)).filter(function(el) { return el !== null; });
+          injected.forEach(function(el) { grid.appendChild(el); shown++; });
+        }
       }
     }
 
     cfStatus.style.display = 'block';
-    cfStatus.textContent = 'Showing ' + shown + ' parts for ' + year + ' ' + make + ' ' + model + ' (' + hidden + ' hidden)';
+    cfStatus.innerHTML = '<strong>' + shown + ' parts</strong> found for ' + year + ' ' + make + ' ' + model + ' &nbsp;&middot;&nbsp; ' + hidden + ' hidden';
     cfReset.style.display = 'inline-block';
     cfBtn.textContent = 'Filter';
     cfBtn.disabled = false;
   });
 
   cfReset.addEventListener('click', function() {
-    // Remove injected products
     document.querySelectorAll('.ymm-cf-injected').forEach(function(el) { el.remove(); });
-
-    // Show all original cards
     document.querySelectorAll('.product-card').forEach(function(card) {
       var wrapper = card.parentElement || card;
       wrapper.classList.remove('ymm-cf-hidden');
     });
-
     cfStatus.style.display = 'none';
     cfReset.style.display = 'none';
     cfMake.value = '';
