@@ -11,15 +11,9 @@
     },
     {
       "type": "color",
-      "id": "button_color",
-      "label": "Button Color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
       "id": "accent_color",
       "label": "Accent Color",
-      "default": "#e63e2f"
+      "default": "#c0392b"
     },
     {
       "type": "range",
@@ -62,7 +56,6 @@
       <button
         id="bitsy-search-btn"
         class="bitsy-ymm-btn"
-        style="background: {{ block.settings.button_color }}; color: white;"
         disabled
       >
         Find Parts
@@ -73,10 +66,10 @@
 
 <style>
   .bitsy-ymm-search {
-    padding: 1rem;
-    background: #f9f9f9;
-    border: 1px solid #e5e5e5;
-    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    background: #1a1a1a;
+    border: 1px solid {{ block.settings.accent_color }};
+    border-radius: 8px;
     margin-bottom: 1.5rem;
     max-width: {{ block.settings.max_width }}%;
     {% if block.settings.alignment == 'center' %}
@@ -97,9 +90,10 @@
     flex-wrap: wrap;
   }
   .bitsy-ymm-heading {
-    font-weight: 700;
-    font-size: 0.95rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     white-space: nowrap;
+    color: #ffffff;
   }
   .bitsy-ymm-dropdowns {
     display: flex;
@@ -109,31 +103,47 @@
     flex: 1;
   }
   .bitsy-ymm-select {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    background: white;
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    border: 1px solid #3a3a3a;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    background: #2a2a2a;
+    color: #cccccc;
     cursor: pointer;
     flex: 1;
-    min-width: 120px;
+    min-width: 110px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
   }
   .bitsy-ymm-select:disabled {
-    background: #f5f5f5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
+  .bitsy-ymm-select option {
+    background: #2a2a2a;
+    color: #cccccc;
+  }
   .bitsy-ymm-btn {
-    padding: 0.5rem 1.25rem;
+    padding: 0.45rem 1.25rem;
     border: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-radius: 5px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    background: {{ block.settings.accent_color }};
+    color: #ffffff;
+    transition: opacity 0.15s;
   }
   .bitsy-ymm-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+  }
+  .bitsy-ymm-btn:not(:disabled):hover {
+    opacity: 0.85;
   }
   @media (max-width: 768px) {
     .bitsy-ymm-search {
@@ -145,20 +155,10 @@
       flex-direction: column;
       align-items: stretch;
     }
-    .bitsy-ymm-heading {
-      text-align: center;
-    }
-    .bitsy-ymm-dropdowns {
-      flex-direction: column;
-    }
-    .bitsy-ymm-select {
-      width: 100%;
-      min-width: unset;
-    }
-    .bitsy-ymm-btn {
-      width: 100%;
-      padding: 0.75rem;
-    }
+    .bitsy-ymm-heading { text-align: center; }
+    .bitsy-ymm-dropdowns { flex-direction: column; }
+    .bitsy-ymm-select { width: 100%; min-width: unset; }
+    .bitsy-ymm-btn { width: 100%; padding: 0.75rem; }
   }
 </style>
 
